@@ -8,6 +8,8 @@ The following dependencies are already added to [package.json](package.json) and
 - React Router v7 (routing as framework)
 - NextUI v2.6.10 (component library)
 - Tailwind CSS v3.4.16 (CSS framework)
+- MobX (state management library)
+- Axios (HTTP client library)
 
 
 ## Setup
@@ -65,3 +67,5 @@ Tips:
 - React Router v7: https://reactrouter.com/home
 - NextUI: https://nextui.org/docs/guide/introduction
 - Tailwind CSS: https://tailwindcss.com/
+- MobX: https://mobx.js.org/
+- Axios: https://axios-http.com/docs/intro
