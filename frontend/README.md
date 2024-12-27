@@ -1,67 +1,67 @@
-# Welcome to React Router!
+# Introduction
 
-A modern, production-ready template for building full-stack React applications using React Router.
+The project was created with [React Router v7](https://reactrouter.com/start/framework/installation) and [Vite](https://vite.dev/) (TypeScript).
 
-[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/github/remix-run/react-router-templates/tree/main/default)
+**Note:** Vite has HMR (Hot Module Replacement) meaning that the web page is automatically updated while writing code.
 
-## Features
+The following dependencies are already added to [package.json](package.json) and [package-lock.json](package-lock.json):
+- React Router v7 (routing as framework)
+- NextUI v2.6.10 (component library)
+- Tailwind CSS v3.4.16 (CSS framework)
 
-- 🚀 Server-side rendering
-- ⚡️ Hot Module Replacement (HMR)
-- 📦 Asset bundling and optimization
-- 🔄 Data loading and mutations
-- 🔒 TypeScript by default
-- 🎉 TailwindCSS for styling
-- 📖 [React Router docs](https://reactrouter.com/)
 
-## Getting Started
+## Setup
 
-### Installation
+Make sure you have:
+- node.js v22.12.0
+- npm v10.9.0
 
-Install the dependencies:
-
+Install the dependencies (inside `frontend` directory):
 ```bash
 npm install
 ```
 
-### Development
 
-Start the development server with HMR:
+## Running
 
-```bash
-npm run dev
-```
+Start the development server from:
 
-Your application will be available at `http://localhost:5173`.
+- **terminal**
 
-## Building for Production
+    ```bash
+    npm run dev
+    ```
 
-Create a production build:
+- **WebStorm**
 
-```bash
-npm run build
-```
+    ```
+    1. Edit configurations (at the top-right corner)
+    2. Add a new NPM configuration
+    3. Give it a name
+    4. Select the package.json (it should be already detected)
+    5. Select run as the command
+    6. Select dev as the script
+    7. Apply & close
+    8. Click the run button (at the top-right corner)
+    ```
 
-## Deployment
+The web application will be available at http://localhost:5173.
 
-### DIY Deployment
 
-If you're familiar with deploying Node applications, the built-in app server is production-ready.
+## Conventions
 
-Make sure to deploy the output of `npm run build`
+If you want to be cool 😎, then follow these conventions:
+- `PascalCase`: class / interface / type / enum
+- `lowerCamelCase`: variable / parameter / function / method / propery / module alias
+- `CONSTANT_CASE`: global constant values / enum values
+- indent: 4 whitespaces (**no tabs**)
 
-```
-├── package.json
-├── package-lock.json (or pnpm-lock.yaml, or bun.lockb)
-├── build/
-│   ├── client/    # Static assets
-│   └── server/    # Server-side code
-```
+Tips:
+- if you are using **Visual Studio Code**, enable `Use Tab Stops` in settings
 
-## Styling
 
-This template comes with [Tailwind CSS](https://tailwindcss.com/) already configured for a simple default starting experience. You can use whatever CSS framework you prefer.
+## Useful links
 
----
-
-Built with ❤️ using React Router.
+- React Router v7: https://reactrouter.com/home
+- NextUI: https://nextui.org/docs/guide/introduction
+- Tailwind CSS: https://tailwindcss.com/
