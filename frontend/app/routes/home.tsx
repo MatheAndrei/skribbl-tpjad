@@ -1,4 +1,5 @@
 import type { Route } from "./+types/home";
+import Canvas from "~/components/Canvas";
 
 export function meta({}: Route.MetaArgs) {
     return [
@@ -8,7 +9,7 @@ export function meta({}: Route.MetaArgs) {
 
 function Home() {
     return (
-        <p>It works!</p>
+        <Canvas width={500} height={500} canvasColor={"black"}/>
     );
 }
 

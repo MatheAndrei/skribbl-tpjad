@@ -12,8 +12,17 @@ import type { Route } from "./+types/root";
 import type {NavigateOptions} from "react-router";
 import {NextUIProvider} from "@nextui-org/react";
 import stylesheet from "./app.css?url";
+import {configure} from "mobx";
 
 
+// linting options for MobX
+configure({
+    computedRequiresReaction: true,
+    reactionRequiresObservable: true,
+});
+
+
+// for NextUI components to have autocomplete and type safety when using the router
 declare module "@react-types/shared" {
     interface RouterConfig {
         routerOptions: NavigateOptions;
