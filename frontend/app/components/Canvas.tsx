@@ -1,10 +1,9 @@
 import {useEffect, useRef} from "react";
-import type {MouseEvent} from "react";
 import {drawingService} from "~/services/DrawingService";
 
 interface CanvasProps {
-    width: number;
-    height: number;
+    width: number | string;
+    height: number | string;
     canvasColor?: string;
 }
 
@@ -14,27 +13,44 @@ function Canvas({width, height, canvasColor}: CanvasProps) {
     useEffect(() => {
         if (!canvasRef.current) return;
 
-        drawingService.initCanvas(canvasRef.current, width, height, canvasColor);
+        // init canvas
+        const canvas = canvasRef.current;
+        drawingService.initCanvas(canvasRef.current, canvasColor);
+
+        // add listeners
+        canvas.addEventListener("mousedown", onMouseDown);
+        window.addEventListener("mouseup", onMouseUp);
+        window.addEventListener("mousemove", onMouseMove);
+        window.addEventListener("resize", onWindowResize);
+
+        return () => {
+            canvas.removeEventListener("mousedown", onMouseDown);
+            window.removeEventListener("mouseup", onMouseUp);
+            window.removeEventListener("mousemove", onMouseMove);
+            window.removeEventListener("resize", onWindowResize);
+        }
     }, []);
 
-    const onMouseDown = (event: MouseEvent<HTMLCanvasElement>) => {
+    const onMouseDown = (event: MouseEvent) => {
         drawingService.onMouseDown(event);
     };
 
-    const onMouseUp = (event: MouseEvent<HTMLCanvasElement>) => {
+    const onMouseUp = (event: MouseEvent) => {
         drawingService.onMouseUp(event);
     };
 
-    const onMouseMove = (event: MouseEvent<HTMLCanvasElement>) => {
+    const onMouseMove = (event: MouseEvent) => {
         drawingService.onMouseMove(event);
     };
+
+    const onWindowResize = () => {
+        drawingService.resizeCanvas();
+    }
 
     return (
         <canvas
             ref={canvasRef}
-            onMouseDown={onMouseDown}
-            onMouseUp={onMouseUp}
-            onMouseMove={onMouseMove}
+            className="border-3 border-gray-500 cursor-crosshair select-none"
             style={{
                 width: width,
                 height: height,
