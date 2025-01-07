@@ -5,7 +5,7 @@ import java.util.List;
 import com.corundumstudio.socketio.SocketIOClient;
 
 public abstract class BasicEvent {
-    protected static String name;
+    protected String name;
     protected List<SocketIOClient> excludedClients;
     protected BasicEventBody body;
 
@@ -14,16 +14,16 @@ public abstract class BasicEvent {
     }
 
     public BasicEvent(String name) {
-        BasicEvent.name = name;
+        this.name = name;
     }
 
     public BasicEvent(String name, BasicEventBody body) {
-        BasicEvent.name = name;
+        this.name = name;
         this.body = body;
     }
 
-    public static String getName() {
-        return BasicEvent.name;
+    public String getName() {
+        return this.name;
     }
 
     public List<SocketIOClient> getExcludedClients() {

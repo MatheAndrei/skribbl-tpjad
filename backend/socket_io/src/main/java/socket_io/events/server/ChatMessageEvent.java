@@ -31,6 +31,10 @@ public class ChatMessageEvent extends BasicEvent {
         }
     }
 
+    public ChatMessageEvent() {
+        super("message");
+    }
+
     public ChatMessageEvent(ChatMessageEventBody body) {
         super("message", body);
     }

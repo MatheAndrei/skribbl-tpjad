@@ -9,6 +9,10 @@ public class DisconnectEvent extends BasicEvent{
 
     }
 
+    public DisconnectEvent() {
+        super("disconnect");
+    }
+
     public DisconnectEvent(DisconnectEventBody body) {
         super("disconnect", body);
     }

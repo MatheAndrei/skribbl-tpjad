@@ -1,10 +1,9 @@
 package socket_io;
 
-import java.util.List;
 import java.util.stream.Collectors;
 
-import com.corundumstudio.socketio.SocketIOClient;
 import com.corundumstudio.socketio.SocketIOServer;
+import com.corundumstudio.socketio.listener.ConnectListener;
 import com.corundumstudio.socketio.listener.DataListener;
 import com.corundumstudio.socketio.listener.DisconnectListener;
 
@@ -24,18 +23,19 @@ public class SocketIOService {
     private final SocketIOServer server;
     private final SessionService sessionService;
 
-    public SocketIOService(SocketIOServer server, SessionService sessionService) {
+    public SocketIOService(SocketIOServer server) {
         this.server = server;
-        this.sessionService = sessionService;
+        this.sessionService = new SessionService();
         this.initializeServer();
     }
     
     private void initializeServer(){
         this.server.addDisconnectListener(this.onDisconnect());
-        this.server.addEventListener(DisconnectEvent.getName(), DisconnectEvent.DisconnectEventBody.class, this.onDisconnectClient());
-        this.server.addEventListener(ChatMessageEvent.getName(), ChatMessageEvent.ChatMessageEventBody.class, this.onChatMesage());
-        this.server.addEventListener(ChooseWordEvent.getName(), ChooseWordEvent.ChooseWordEventBody.class, this.onChooseWord());
-        this.server.addEventListener(DrawEvent.getName(), DrawEvent.DrawEventBody.class, this.onDraw());
+        this.server.addConnectListener(this.onConnect());
+        this.server.addEventListener((new DisconnectEvent()).getName(), DisconnectEvent.DisconnectEventBody.class, this.onDisconnectClient());
+        this.server.addEventListener((new ChatMessageEvent()).getName(), ChatMessageEvent.ChatMessageEventBody.class, this.onChatMesage());
+        this.server.addEventListener((new ChooseWordEvent()).getName(), ChooseWordEvent.ChooseWordEventBody.class, this.onChooseWord());
+        this.server.addEventListener((new DrawEvent()).getName(), DrawEvent.DrawEventBody.class, this.onDraw());
     }
 
     private DisconnectListener onDisconnect(){
@@ -48,11 +48,22 @@ public class SocketIOService {
         };
     }
 
+    private ConnectListener onConnect(){
+        return client -> {
+            System.out.println("Client " + client.getSessionId() + " connected ");
+
+            // var params = client.getHandshakeData().getUrlParams();
+            // String room = params.get("room").stream().collect(Collectors.joining());
+            // String username = params.get("username").stream().collect(Collectors.joining());
+
+        };
+    }
+
     private void sentUpdateAllEvent(UpdateAllEvent event){
         UpdateAllEvent.UpdateAllEventBody body = (UpdateAllEvent.UpdateAllEventBody)event.getBody();
         server.getRoomOperations(body.getRoom().getId()).getClients().forEach(cl -> {
             if (!event.getExcludedClients().contains(cl))
-                cl.sendEvent(UpdateAllEvent.getName(), event);
+                cl.sendEvent((new UpdateAllEvent()).getName(), event);
         });
     }
 
@@ -99,5 +110,17 @@ public class SocketIOService {
             event.addExcludedClients(client); // exlude the client that is drawing so that he con continue to draw in peace
             this.sentUpdateAllEvent(event);
         };
+    }
+
+    public void start() {
+        this.server.start();
+        System.out.println("Socket.IO server started on port 9092");
+    }
+
+    public void stop() {
+        if (this.server != null) {
+            this.server.stop();
+            System.out.println("Socket.IO server stopped.");
+        }
     }
 }

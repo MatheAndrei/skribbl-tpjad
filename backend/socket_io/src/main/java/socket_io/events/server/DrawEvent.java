@@ -43,6 +43,10 @@ public class DrawEvent extends BasicEvent {
         }
     }
 
+    public DrawEvent() {
+        super("draw");
+    }
+
     public DrawEvent(DrawEventBody body) {
         super("draw", body);
     }

@@ -43,6 +43,10 @@ public class ChooseWordEvent extends BasicEvent {
         }
     }
 
+    public ChooseWordEvent() {
+        super("choose_word");
+    }
+
     public ChooseWordEvent(ChooseWordEventBody body) {
         super("choose_word", body);
     }

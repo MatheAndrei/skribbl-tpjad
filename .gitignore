@@ -1,3 +1,4 @@
 .DS_Store
+.vscode/
 backend/socket_io/.mvn
 backend/socket_io/target
