@@ -50,11 +50,10 @@ public class SocketIOService {
 
     private void sentUpdateAllEvent(UpdateAllEvent event){
         UpdateAllEvent.UpdateAllEventBody body = (UpdateAllEvent.UpdateAllEventBody)event.getBody();
-        List<SocketIOClient> clients = this.sessionService.getSocketIOClientsForRoom(body.getRoom());
-        for (var client : clients){
-            if (!event.getExcludedClients().contains(client))
-                client.sendEvent(UpdateAllEvent.getName(), event);
-        }
+        server.getRoomOperations(body.getRoom().getId()).getClients().forEach(cl -> {
+            if (!event.getExcludedClients().contains(cl))
+                cl.sendEvent(UpdateAllEvent.getName(), event);
+        });
     }
 
     private DataListener onDisconnectClient(){
