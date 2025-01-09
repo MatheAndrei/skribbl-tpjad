@@ -1,37 +1,34 @@
-import colors from "~/domain/Colors";
+import {observer} from "mobx-react-lite";
 import {drawingService} from "~/services/DrawingService";
+import colors from "~/domain/Colors";
 
-function ColorBar() {
+const ColorBar = observer(() => {
+
     const onColorClick = (color: string) => {
         drawingService.setColor(color);
     }
 
     return (
-        <div className={"w-1/2 h-full"}>
-            <div className={"w-full h-1/2 flex"}>
-                {colors.slice(0, colors.length / 2).map((color) => (
+        <div className={"w-full h-16 grid grid-rows-2 grid-flow-col gap-2"}>
+            {colors.map((color) => (
+                color === drawingService.drawingStore.color ? (
                     <div
                         key={color}
+                        className={"w-full h-full rounded-sm outline outline-2 outline-foreground cursor-pointer"}
+                        style={{backgroundColor: color}}
                         onClick={() => onColorClick(color)}
-                        className={"flex-1 cursor-pointer"}
-                        style={{ backgroundColor: color }}
-                    >
-                    </div>
-                ))}
-            </div>
-            <div className={"w-full h-1/2 flex"}>
-                {colors.slice(colors.length / 2).map((color) => (
+                    ></div>
+                ) : (
                     <div
                         key={color}
+                        className={"w-full h-full rounded-sm cursor-pointer"}
+                        style={{backgroundColor: color}}
                         onClick={() => onColorClick(color)}
-                        className={"flex-1 cursor-pointer"}
-                        style={{ backgroundColor: color }}
-                    >
-                    </div>
-                ))}
-            </div>
+                    ></div>
+                )
+            ))}
         </div>
     );
-}
+});
 
 export default ColorBar;

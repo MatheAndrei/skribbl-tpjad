@@ -59,7 +59,13 @@ export default function App() {
 
     return (
         <NextUIProvider navigate={navigate} useHref={useHref}>
-            <Outlet/>
+            <main className={"dark text-foreground bg-background"}>
+                <div className={"backdrop-blur-[1px]"}>
+                    <div className={"max-w-screen-xl min-h-screen mx-auto flex justify-center items-center"}>
+                        <Outlet/>
+                    </div>
+                </div>
+            </main>
         </NextUIProvider>
     );
 }

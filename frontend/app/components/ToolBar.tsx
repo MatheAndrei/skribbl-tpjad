@@ -1,51 +1,47 @@
-import {Slider} from "@nextui-org/slider";
+import {observer} from "mobx-react-lite";
+import {Button, Slider} from "@nextui-org/react";
 import {DrawingService, drawingService} from "~/services/DrawingService";
 import ToolEnum from "~/services/tools/ToolEnum";
 
-function ToolBar() {
+const ToolBar = observer(() => {
+
     const onSliderChange = (value: number | number[]) => {
         drawingService.setSize(value as number);
     }
 
     return (
-        <div className={"w-1/2 flex align-top gap-4"}>
-            <div style={{
-                width: "100%",
-                display: "flex",
-                flexDirection: "column",
-                gap: ".5rem",
-            }}>
-                <button
-                    onClick={() => drawingService.setTool(ToolEnum.BRUSH)}
-                    style={{
-                        backgroundColor: "olive",
-                    }}
-                >
-                    Brush
-                </button>
-                <Slider
-                    label={"Size"}
-                    defaultValue={DrawingService.DEFAULT_SIZE}
-                    minValue={DrawingService.MIN_SIZE}
-                    maxValue={DrawingService.MAX_SIZE}
-                    step={DrawingService.STEP_SIZE}
-                    hideValue={true}
-                    color={"foreground"}
-                    radius={"md"}
-                    onChange={onSliderChange}
-                />
-            </div>
-            <button
-                onClick={() => drawingService.setTool(ToolEnum.BUCKET)}
-                style={{
-                    width: "100%",
-                    backgroundColor: "orange",
-                }}
+        <div className={"flex items-center gap-4"}>
+            <Button
+                color={"warning"}
+                onPress={() => drawingService.setTool(ToolEnum.BRUSH)}
+            >
+                Brush
+            </Button>
+            <Button
+                color={"secondary"}
+                onPress={() => drawingService.setTool(ToolEnum.BUCKET)}
             >
                 Bucket
-            </button>
+            </Button>
+            <Slider
+                aria-label={"Brush Size"}
+                value={drawingService.drawingStore.brushSize}
+                minValue={DrawingService.MIN_BRUSH_SIZE}
+                maxValue={DrawingService.MAX_BRUSH_SIZE}
+                step={DrawingService.BRUSH_STEP_SIZE}
+                hideValue
+                showSteps
+                radius={"lg"}
+                color={"primary"}
+                classNames={{
+                    base: "w-1/3 ml-auto",
+                    track: "bg-default-300",
+                    step: "bg-primary"
+                }}
+                onChange={onSliderChange}
+            />
         </div>
     );
-}
+});
 
 export default ToolBar;

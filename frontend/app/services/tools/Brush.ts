@@ -15,7 +15,7 @@ class Brush extends Tool {
         const dy = -Math.abs(pos1.y - pos0.y);
         const sy = pos0.y < pos1.y ? 1 : -1;
 
-        let error = dx + dy;
+        let err = dx + dy;
 
         const radius = Math.round(width / 2);
         while (true) {
@@ -23,44 +23,44 @@ class Brush extends Tool {
 
             if (pos0.x === pos1.x && pos0.y === pos1.y) break;
 
-            const e2 = 2 * error;
+            const e2 = 2 * err;
             if (e2 >= dy) {
-                error += dy;
+                err += dy;
                 pos0.x += sx;
             }
             if (e2 <= dx) {
-                error += dx;
+                err += dx;
                 pos0.y += sy;
             }
         }
     }
 
     private drawCircle(data: Uint32Array<ArrayBufferLike>, pos: Vec2, radius:number, color: number) {
-        let x = 0;
-        let y = radius;
-        let d = 3 - 2 * radius;
+        let x = radius;
+        let y = 0;
+        let dx = 1 - 2 * radius;
+        let dy = 1;
 
-        const drawHorizontalLine = (x0: number, x1: number, y: number) => {
-            for (let x = x0; x <= x1; x++) {
-                this.setPixel(data, {x, y}, color);
+        let err = dx + dy;
+
+        while (x >= y) {
+            for (let i = pos.x - x; i <= pos.x + x; i++) {
+                this.setPixel(data, {x: i, y: pos.y + y}, color);
+                this.setPixel(data, {x: i, y: pos.y - y}, color);
             }
-        }
+            for (let i = pos.x - y; i <= pos.x + y; i++) {
+                this.setPixel(data, {x: i, y: pos.y + x}, color);
+                this.setPixel(data, {x: i, y: pos.y - x}, color);
+            }
 
-        const fillCirclePoints = (cx: number, cy: number, x: number, y: number) => {
-            drawHorizontalLine(cx - x, cx + x, cy + y);
-            drawHorizontalLine(cx - x, cx + x, cy - y);
-            drawHorizontalLine(cx - y, cx + y, cy + x);
-            drawHorizontalLine(cx - y, cx + y, cy - x);
-        };
-
-        while (y >= x) {
-            fillCirclePoints(pos.x, pos.y, x, y);
-            x++;
-            if (d > 0) {
-                y--;
-                d = d + 4 * (x - y) + 10;
+            if (err <= 0) {
+                y++;
+                dy += 2;
+                err += dy;
             } else {
-                d = d + 4 * x + 6;
+                x--;
+                dx += 2;
+                err += dx;
             }
         }
     }
