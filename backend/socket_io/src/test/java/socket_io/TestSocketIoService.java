@@ -15,28 +15,56 @@ public class TestSocketIoService {
     private Integer testingPort = 9093;
     private SocketIOService service;
     private SocketIOClient client;
+    private Thread serverThread;
 
     @BeforeEach
     void startServer() {
-        server = new SocketIOConfiguration(testingHost,testingPort).createSocketIOServer();
-        service = new SocketIOService(server);
-        
-        service.start();
+        serverThread = new Thread(() -> {
+            try {
+                server = new SocketIOConfiguration(testingHost, testingPort).createSocketIOServer();
+                service = new SocketIOService(server);
+                service.start();
+                
+                while (!Thread.currentThread().isInterrupted()) {
+                    Thread.sleep(100); // Check periodically for interruption
+                }
+            } catch (InterruptedException e) {
+                service.stop();
+                Thread.currentThread().interrupt();
+            } catch (Exception e) {
+                throw new RuntimeException("Error while starting the server", e);
+            }
+        });
+    
+        serverThread.start();
+        try {
+			Thread.currentThread().sleep(1000);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		} 
     }
 
     @AfterEach
     void stopServer() {
-        service.stop();
+        if (serverThread != null && serverThread.isAlive()) {
+            serverThread.interrupt();
+            try {
+                serverThread.join();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new RuntimeException("Error while stopping the server", e);
+            }
+        }
     }
 
-    // @Test
-    // void testConnection() throws URISyntaxException, InterruptedException {
-    //     // Connect to the server
-    //     client = new SocketIOClient(testingHost, testingPort);
-    //     client.connect();
-    //     Thread.sleep(1000);
-    //     assertTrue(client.isConnected());
-    // }
+    @Test
+    void testConnection() throws InterruptedException, URISyntaxException {
+        client = new SocketIOClient(testingHost, testingPort);
+        client.connect();
+    
+        Thread.sleep(1000); 
+        assertTrue(client.isConnected(), "Client failed to connect.");
+    }
 
     // @Test
     // void testSocketIoEventHandling() throws URISyntaxException, InterruptedException {

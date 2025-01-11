@@ -41,8 +41,8 @@ public class SocketIOService {
     private DisconnectListener onDisconnect(){
         return client -> {
             var params = client.getHandshakeData().getUrlParams();
-            String room = params.get("room").stream().collect(Collectors.joining());
-            String username = params.get("username").stream().collect(Collectors.joining());
+            // String room = params.get("room").stream().collect(Collectors.joining());
+            // String username = params.get("username").stream().collect(Collectors.joining());
 
             this.sessionService.removeClient(client);
         };
@@ -114,7 +114,7 @@ public class SocketIOService {
 
     public void start() {
         this.server.start();
-        System.out.println("Socket.IO server started on some port ");
+        System.out.println("Socket.IO server started on " + this.server.getConfiguration().getHostname() + ":" + this.server.getConfiguration().getPort());
     }
 
     public void stop() {
