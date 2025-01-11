@@ -1,6 +1,4 @@
-package socket_io;
-
-import java.util.stream.Collectors;
+package springBoot.socket_io;
 
 import com.corundumstudio.socketio.SocketIOServer;
 import com.corundumstudio.socketio.listener.ConnectListener;
@@ -12,16 +10,26 @@ import domain.Message;
 import domain.Room;
 import domain.User;
 import domain.Word;
-import socket_io.events.client.UpdateAllEvent;
-import socket_io.events.client.UpdateAllEvent.UpdateAllEventBody;
-import socket_io.events.server.ChatMessageEvent;
-import socket_io.events.server.ChooseWordEvent;
-import socket_io.events.server.DisconnectEvent;
-import socket_io.events.server.DrawEvent;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
+import springBoot.socket_io.events.client.UpdateAllEvent;
+import springBoot.socket_io.events.server.ChatMessageEvent;
+import springBoot.socket_io.events.server.ChooseWordEvent;
+import springBoot.socket_io.events.server.DisconnectEvent;
+import springBoot.socket_io.events.server.DrawEvent;
 
+@Component
+@Slf4j
+@RequiredArgsConstructor(onConstructor = @__(@Autowired))
 public class SocketIOService {
     private final SocketIOServer server;
     private final SessionService sessionService;
+
 
     public SocketIOService(SocketIOServer server) {
         this.server = server;

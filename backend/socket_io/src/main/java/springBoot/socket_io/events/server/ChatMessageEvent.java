@@ -1,7 +1,7 @@
-package socket_io.events.server;
+package springBoot.socket_io.events.server;
 
 import domain.Message;
-import socket_io.events.BasicEvent;
+import springBoot.socket_io.events.BasicEvent;
 
 public class ChatMessageEvent extends BasicEvent {
     

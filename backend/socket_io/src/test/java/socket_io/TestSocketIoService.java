@@ -8,6 +8,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import com.corundumstudio.socketio.SocketIOServer;
+import springBoot.socket_io.SocketIOConfiguration;
+import springBoot.socket_io.SocketIOService;
 
 public class TestSocketIoService {
     private SocketIOServer server;
