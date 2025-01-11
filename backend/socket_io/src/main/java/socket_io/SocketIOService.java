@@ -40,7 +40,7 @@ public class SocketIOService {
 
     private DisconnectListener onDisconnect(){
         return client -> {
-            var params = client.getHandshakeData().getUrlParams();
+            // var params = client.getHandshakeData().getUrlParams();
             // String room = params.get("room").stream().collect(Collectors.joining());
             // String username = params.get("username").stream().collect(Collectors.joining());
 
@@ -71,7 +71,7 @@ public class SocketIOService {
         return (client, data, ackSender) -> {
             User sender = ((DisconnectEvent.DisconnectEventBody)data).getSender();
             String roomId = this.sessionService.getClientRoom(sender).getId();
-            this.sessionService.removeClient(sender);
+            this.sessionService.removeUser(sender);
 
             Room room = this.sessionService.getRoomById(roomId);
             this.sentUpdateAllEvent(new UpdateAllEvent(new UpdateAllEvent().new UpdateAllEventBody(room)));
@@ -108,7 +108,7 @@ public class SocketIOService {
             Room room = this.sessionService.getClientRoom(sender);
             UpdateAllEvent event = new UpdateAllEvent(new UpdateAllEvent().new UpdateAllEventBody(room));
             event.addExcludedClients(client); // exlude the client that is drawing so that he con continue to draw in peace
-            this.sentUpdateAllEvent(event);
+            this.sentUpdateAllEvent(event); 
         };
     }
 
