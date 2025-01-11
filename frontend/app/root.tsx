@@ -12,8 +12,17 @@ import type { Route } from "./+types/root";
 import type {NavigateOptions} from "react-router";
 import {NextUIProvider} from "@nextui-org/react";
 import stylesheet from "./app.css?url";
+import {configure} from "mobx";
 
 
+// linting options for MobX
+configure({
+    computedRequiresReaction: true,
+    reactionRequiresObservable: true,
+});
+
+
+// for NextUI components to have autocomplete and type safety when using the router
 declare module "@react-types/shared" {
     interface RouterConfig {
         routerOptions: NavigateOptions;
@@ -50,7 +59,13 @@ export default function App() {
 
     return (
         <NextUIProvider navigate={navigate} useHref={useHref}>
-            <Outlet/>
+            <main className={"dark text-foreground bg-background"}>
+                <div className={"backdrop-blur-[1px]"}>
+                    <div className={"max-w-screen-xl min-h-screen mx-auto flex justify-center items-center"}>
+                        <Outlet/>
+                    </div>
+                </div>
+            </main>
         </NextUIProvider>
     );
 }
