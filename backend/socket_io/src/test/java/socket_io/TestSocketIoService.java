@@ -66,6 +66,8 @@ public class TestSocketIoService {
         assertTrue(client.isConnected(), "Client failed to connect.");
     }
 
+    
+
     // @Test
     // void testSocketIoEventHandling() throws URISyntaxException, InterruptedException {
     //     // Connect to the server using a socket.io client
