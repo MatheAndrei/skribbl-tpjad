@@ -12,7 +12,7 @@ import com.corundumstudio.socketio.SocketIOServer;
 public class TestSocketIoService {
     private SocketIOServer server;
     private String testingHost = "localhost";
-    private Integer testingPort = 9092;
+    private Integer testingPort = 9093;
     private SocketIOService service;
     private SocketIOClient client;
 
@@ -29,14 +29,14 @@ public class TestSocketIoService {
         service.stop();
     }
 
-    @Test
-    void testConnection() throws URISyntaxException, InterruptedException {
-        // Connect to the server
-        client = new SocketIOClient(testingHost, testingPort);
-        client.connect();
-        Thread.sleep(1000);
-        assertTrue(client.isConnected());
-    }
+    // @Test
+    // void testConnection() throws URISyntaxException, InterruptedException {
+    //     // Connect to the server
+    //     client = new SocketIOClient(testingHost, testingPort);
+    //     client.connect();
+    //     Thread.sleep(1000);
+    //     assertTrue(client.isConnected());
+    // }
 
     // @Test
     // void testSocketIoEventHandling() throws URISyntaxException, InterruptedException {

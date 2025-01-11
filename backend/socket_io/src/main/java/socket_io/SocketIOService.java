@@ -114,7 +114,7 @@ public class SocketIOService {
 
     public void start() {
         this.server.start();
-        System.out.println("Socket.IO server started on port 9092");
+        System.out.println("Socket.IO server started on some port ");
     }
 
     public void stop() {
