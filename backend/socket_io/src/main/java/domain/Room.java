@@ -73,5 +73,23 @@ public class Room extends Entity{
             ", settings='" + getSettings() + "'" +
             "}";
     }
+
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == this)
+            return true;
+        if (!(o instanceof Room)) {
+            return false;
+        }
+        Room room = (Room) o;
+        return Objects.equals(host, room.host) && Objects.equals(players, room.players) && id.equals(room.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(host, players, id);
+    }
+
     
 }

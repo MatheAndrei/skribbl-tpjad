@@ -1,4 +1,5 @@
 package domain;
+import java.util.Objects;
 
 public class User extends Entity{
     private String username;
@@ -65,6 +66,62 @@ public class User extends Entity{
     public void setIsHost(Boolean isHost) {
         this.isHost = isHost;
     }
+
+
+    public User(String username, Boolean hasGuessed, Boolean isDrawer, Boolean isHost) {
+        this.username = username;
+        this.hasGuessed = hasGuessed;
+        this.isDrawer = isDrawer;
+        this.isHost = isHost;
+    }
+
+    public Boolean isHasGuessed() {
+        return this.hasGuessed;
+    }
+
+    public Boolean getHasGuessed() {
+        return this.hasGuessed;
+    }
+
+
+    public Boolean isIsDrawer() {
+        return this.isDrawer;
+    }
+
+    public Boolean getIsDrawer() {
+        return this.isDrawer;
+    }
+
+
+    public Boolean getIsHost() {
+        return this.isHost;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == this)
+            return true;
+        if (!(o instanceof User)) {
+            return false;
+        }
+        User user = (User) o;
+        return Objects.equals(username, user.username) && id.equals(user.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(username, id);
+    }
+
+    @Override
+    public String toString() {
+        return "{" +
+            " username='" + getUsername() + "'" +
+            ", hasGuessed='" + isHasGuessed() + "'" +
+            ", isDrawer='" + isIsDrawer() + "'" +
+            ", isHost='" + isIsHost() + "'" +
+            "}";
+    }    
     
     // public SocketIOClient getClient() {
     //     return this.client;
