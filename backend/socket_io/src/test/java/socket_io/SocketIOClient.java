@@ -5,7 +5,6 @@ import java.net.URISyntaxException;
 import io.socket.client.IO;
 import io.socket.client.Socket;
 import io.socket.emitter.Emitter;
-import socket_io.events.server.DisconnectEvent;
 
 
 public class SocketIOClient {
@@ -21,18 +20,15 @@ public class SocketIOClient {
         IO.Options options = new IO.Options();
         options.reconnection = true;
 
-        // IO.setDefaultHostnameVerifier((hostname, session) -> {
-        //     System.out.println("Connecting to: " + hostname);
-        //     return true;
-        // });
-
-        this.clientSocket = IO.socket("http://" + this.host + ":" + this.port, options);
+        var url = "http://" + this.host + ":" + this.port;
+        this.clientSocket = IO.socket(url, options);
         
         this.initClient();
     }
 
     public void connect(){
         this.clientSocket.connect();
+        
     }
 
     public boolean isConnected(){
@@ -40,9 +36,10 @@ public class SocketIOClient {
     }
 
     private void initClient(){
-        this.clientSocket.on((new DisconnectEvent()).getName(), new Emitter.Listener() {
+        this.clientSocket.on(Socket.EVENT_DISCONNECT, new Emitter.Listener() {
             @Override
             public void call(Object... args) {
+                System.out.println("Disconnected from the server!");
             }
         });
 
@@ -53,7 +50,7 @@ public class SocketIOClient {
             }
         });
         this.clientSocket.on(Socket.EVENT_CONNECT_ERROR, args -> {
-            System.err.println("Connection error: " + args[0]); // Log the error details
+            System.err.println("Connection error: " + args[0]);
         });
     }
 }
