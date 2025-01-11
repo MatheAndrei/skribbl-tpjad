@@ -1,4 +1,4 @@
-package socket_io;
+package springBoot.socket_io;
 
 import com.corundumstudio.socketio.SocketIOServer;
 

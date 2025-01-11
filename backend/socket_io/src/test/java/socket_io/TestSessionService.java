@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import domain.Room;
 import domain.User;
 import domain.enums.RoomStatus;
+import springBoot.socket_io.SessionService;
 
 public class TestSessionService {
     

@@ -1,4 +1,4 @@
-package socket_io.events;
+package springBoot.socket_io.events;
 
 import java.util.List;
 

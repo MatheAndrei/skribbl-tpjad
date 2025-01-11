@@ -1,10 +1,10 @@
-package socket_io.events.server;
+package springBoot.socket_io.events.server;
 
 import domain.User;
-import socket_io.events.BasicEvent;
+import springBoot.socket_io.events.BasicEvent;
 
 /// server side
-public class DisconnectEvent extends BasicEvent{
+public class DisconnectEvent extends BasicEvent {
 
     public class DisconnectEventBody implements BasicEventBody{
         private User sender;

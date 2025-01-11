@@ -1,8 +1,8 @@
-package socket_io.events.server;
+package springBoot.socket_io.events.server;
 
 import domain.User;
 import domain.Word;
-import socket_io.events.BasicEvent;
+import springBoot.socket_io.events.BasicEvent;
 
 public class ChooseWordEvent extends BasicEvent {
     

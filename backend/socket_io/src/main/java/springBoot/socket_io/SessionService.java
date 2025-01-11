@@ -1,4 +1,4 @@
-package socket_io;
+package springBoot.socket_io;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -14,7 +14,9 @@ import domain.Room;
 import domain.User;
 import domain.Word;
 import domain.enums.RoomStatus;
+import org.springframework.stereotype.Service;
 
+@Service
 public class SessionService {
     private Map<User, SocketIOClient> users;
     private List<User> pendingUsers;

@@ -1,9 +1,9 @@
-package socket_io.events.client;
+package springBoot.socket_io.events.client;
 
-import socket_io.events.BasicEvent;
+import springBoot.socket_io.events.BasicEvent;
 
 /// client side
-public class DisconnectEvent extends BasicEvent{
+public class DisconnectEvent extends BasicEvent {
 
     public class DisconnectEventBody implements BasicEventBody{
 
