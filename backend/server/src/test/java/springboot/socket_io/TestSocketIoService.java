@@ -6,12 +6,14 @@ import org.junit.jupiter.api.AfterEach;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.context.SpringBootTest;
 
 import com.corundumstudio.socketio.SocketIOServer;
 
 import springBoot.socket_io.SocketIOConfiguration;
 import springBoot.socket_io.SocketIOService;
 
+@SpringBootTest
 public class TestSocketIoService {
     private SocketIOServer server;
     private String testingHost = "localhost";
@@ -63,7 +65,7 @@ public class TestSocketIoService {
     @Test
     void testConnection() throws InterruptedException, URISyntaxException {
         client = new SocketIOClient(testingHost, testingPort);
-        client.connect();
+        client.connect("aaa");
     
         Thread.sleep(1000); 
         assertTrue(client.isConnected(), "Client failed to connect.");

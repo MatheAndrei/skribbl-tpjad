@@ -2,6 +2,7 @@ package springBoot.socket_io;
 
 import com.corundumstudio.socketio.SocketIOServer;
 import com.corundumstudio.socketio.listener.ConnectListener;
+import com.corundumstudio.socketio.listener.*;
 import com.corundumstudio.socketio.listener.DataListener;
 import com.corundumstudio.socketio.listener.DisconnectListener;
 
@@ -10,33 +11,42 @@ import domain.Message;
 import domain.Room;
 import domain.User;
 import domain.Word;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.*;
 import springBoot.socket_io.events.client.UpdateAllEvent;
 import springBoot.socket_io.events.server.ChatMessageEvent;
 import springBoot.socket_io.events.server.ChooseWordEvent;
 import springBoot.socket_io.events.server.DisconnectEvent;
 import springBoot.socket_io.events.server.DrawEvent;
 
-@Component
+//@Component
 @Slf4j
-@RequiredArgsConstructor(onConstructor = @__(@Autowired))
+@Service
+@RequiredArgsConstructor
 public class SocketIOService {
     private final SocketIOServer server;
     private final SessionService sessionService;
 
-
+    @Autowired
     public SocketIOService(SocketIOServer server) {
         this.server = server;
         this.sessionService = new SessionService();
         this.initializeServer();
     }
     
+    // public SocketIOService(SocketIOServer server, SessionService service) {
+    //     this.server = server;
+    //     this.sessionService = service;
+    //     this.initializeServer();
+    // }
+
     private void initializeServer(){
         this.server.addDisconnectListener(this.onDisconnect());
         this.server.addConnectListener(this.onConnect());
@@ -44,6 +54,9 @@ public class SocketIOService {
         this.server.addEventListener((new ChatMessageEvent()).getName(), ChatMessageEvent.ChatMessageEventBody.class, this.onChatMesage());
         this.server.addEventListener((new ChooseWordEvent()).getName(), ChooseWordEvent.ChooseWordEventBody.class, this.onChooseWord());
         this.server.addEventListener((new DrawEvent()).getName(), DrawEvent.DrawEventBody.class, this.onDraw());
+    
+        this.server.addEventListener("room_id", String.class, this.onGetRoomDataClient());
+
     }
 
     private DisconnectListener onDisconnect(){
@@ -58,7 +71,16 @@ public class SocketIOService {
 
     private ConnectListener onConnect(){
         return client -> {
-            System.out.println("Client " + client.getSessionId() + " connected ");
+            var handshakeData = client.getHandshakeData();
+            String username = handshakeData.getSingleUrlParam("username");
+            
+            if (username != null && !username.isEmpty()) {
+                System.out.println("Client connected with username: " + username);
+            } else {
+                System.out.println("Client connected without a username.");
+            }
+            this.sessionService.linkClient(client, username);
+            //System.out.println("Client " + client.getSessionId() + " connected ");
 
             // var params = client.getHandshakeData().getUrlParams();
             // String room = params.get("room").stream().collect(Collectors.joining());
@@ -73,6 +95,17 @@ public class SocketIOService {
             if (!event.getExcludedClients().contains(cl))
                 cl.sendEvent((new UpdateAllEvent()).getName(), event);
         });
+    }
+
+    private DataListener onGetRoomDataClient(){
+        return (client, data, ackSender) -> {
+            String roomId =  data.toString();
+            System.out.println("Room with id: " + roomId);
+
+            Room room = this.sessionService.getRoomById(roomId);
+            client.sendEvent((new UpdateAllEvent()).getName(), new UpdateAllEvent(new UpdateAllEvent().new UpdateAllEventBody(room)));
+            // this.sentUpdateAllEvent(new UpdateAllEvent(new UpdateAllEvent().new UpdateAllEventBody(room)));
+        };
     }
 
     private DataListener onDisconnectClient(){

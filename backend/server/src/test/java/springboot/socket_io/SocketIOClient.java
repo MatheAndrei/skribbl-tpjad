@@ -14,19 +14,22 @@ public class SocketIOClient {
     public Socket clientSocket;
 
 
-    public SocketIOClient(String host, Integer port) throws URISyntaxException{
+    public SocketIOClient(String host, Integer port){
         this.host = host;
         this.port = port;
+        
+        
+        
+    }
+
+    public void connect(String username) throws URISyntaxException{
         IO.Options options = new IO.Options();
         options.reconnection = true;
+        options.query = "username=" + username;
 
         var url = "http://" + this.host + ":" + this.port;
         this.clientSocket = IO.socket(url, options);
-        
         this.initClient();
-    }
-
-    public void connect(){
         this.clientSocket.connect();
         
     }

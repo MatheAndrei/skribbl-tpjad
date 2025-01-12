@@ -12,7 +12,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor(onConstructor = @__(@Autowired))
 public class ServerCommandLineRunner implements CommandLineRunner {
 
-    private final SocketIOServer server;
+    private final SocketIOService server;
 
     @Override
     public void run(String... args) throws Exception {
