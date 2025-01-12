@@ -26,7 +26,7 @@ public class WordService implements IWordService {
         if(wordDb != null) {
             wordDb.setWord(word.getWord());
         }
-        return wordRepository.save(word);
+        return wordRepository.save(wordDb);
     }
 
     @Override
