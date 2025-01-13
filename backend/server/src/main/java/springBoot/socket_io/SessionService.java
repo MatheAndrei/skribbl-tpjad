@@ -1,6 +1,7 @@
 package springBoot.socket_io;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -14,6 +15,8 @@ import domain.Room;
 import domain.User;
 import domain.Word;
 import domain.enums.RoomStatus;
+
+import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -22,7 +25,6 @@ public class SessionService {
     private List<User> pendingUsers;
     private List<Room> rooms;
     
-
     public SessionService(){
         this.pendingUsers = new ArrayList<>();
         this.users = new HashMap<>();
@@ -54,9 +56,30 @@ public class SessionService {
         return user;
     }
 
+    public User getUserByUsername(String username){
+        for (var user : users.keySet()){
+            if (user.getUsername().equals(username)){
+                return user;
+            }
+        }
+        return new User();
+    }
+
+    public List<User> getUsers(){
+        var ls = new ArrayList<User>();
+        ls.addAll(users.keySet());
+        return ls;
+    }
+
+    public List<User> getPendingUsers(){
+        return pendingUsers;
+    }
+
     public boolean linkClient(SocketIOClient client, String username){
-        User unlinkedUser = null; 
+        User unlinkedUser = null;
         for (var user : pendingUsers){
+            System.out.println(user + " " +username);
+
             if (user.getUsername().equals(username)){
                 unlinkedUser = user;
                 break;
@@ -65,6 +88,7 @@ public class SessionService {
         if (unlinkedUser != null){
             unlinkedUser.setId(client.getSessionId().toString());
             users.put(unlinkedUser, client);
+            pendingUsers.remove(unlinkedUser);
         }
         return unlinkedUser != null;
     }
@@ -159,6 +183,12 @@ public class SessionService {
             }
         }
         return roomToSend;
+    }
+
+    public void reset(){
+        this.pendingUsers = new ArrayList<>();
+        this.users = new HashMap<>();
+        this.rooms = new ArrayList<>();
     }
 
     public boolean addMessage(Message message){

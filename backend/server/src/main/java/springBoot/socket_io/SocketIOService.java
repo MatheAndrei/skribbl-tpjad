@@ -14,11 +14,14 @@ import domain.Word;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
+import java.io.IOException;
+import java.net.ServerSocket;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
-import org.springframework.stereotype.Component;
 import org.springframework.stereotype.*;
 import springBoot.socket_io.events.client.UpdateAllEvent;
 import springBoot.socket_io.events.server.ChatMessageEvent;
@@ -34,12 +37,12 @@ public class SocketIOService {
     private final SocketIOServer server;
     private final SessionService sessionService;
 
-    @Autowired
-    public SocketIOService(SocketIOServer server) {
-        this.server = server;
-        this.sessionService = new SessionService();
-        this.initializeServer();
-    }
+    // @Autowired
+    // public SocketIOService(SocketIOServer server) {
+    //     this.server = server;
+    //     this.sessionService = new SessionService();
+    //     this.initializeServer();
+    // }
     
     // public SocketIOService(SocketIOServer server, SessionService service) {
     //     this.server = server;
@@ -47,6 +50,7 @@ public class SocketIOService {
     //     this.initializeServer();
     // }
 
+    @PostConstruct
     private void initializeServer(){
         this.server.addDisconnectListener(this.onDisconnect());
         this.server.addConnectListener(this.onConnect());
@@ -79,12 +83,8 @@ public class SocketIOService {
             } else {
                 System.out.println("Client connected without a username.");
             }
-            this.sessionService.linkClient(client, username);
-            //System.out.println("Client " + client.getSessionId() + " connected ");
-
-            // var params = client.getHandshakeData().getUrlParams();
-            // String room = params.get("room").stream().collect(Collectors.joining());
-            // String username = params.get("username").stream().collect(Collectors.joining());
+            boolean result = this.sessionService.linkClient(client, username);
+            System.out.println("Client is linked: " + result);
 
         };
     }
@@ -158,10 +158,41 @@ public class SocketIOService {
         System.out.println("Socket.IO server started on " + this.server.getConfiguration().getHostname() + ":" + this.server.getConfiguration().getPort());
     }
 
+    private void waitForPortRelease(int port) {
+        int retries = 10; // Max number of retries
+        int delay = 500; // Delay between retries in milliseconds
+    
+        for (int i = 0; i < retries; i++) {
+            if (!isPortInUse(port)) {
+                System.out.println("Port " + port + " is now free.");
+                return;
+            }
+    
+            try {
+                Thread.sleep(delay);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new RuntimeException("Thread was interrupted while waiting for port release", e);
+            }
+        }
+    
+        throw new RuntimeException("Port " + port + " is still in use after waiting.");
+    }
+
+    private boolean isPortInUse(int port) {
+    try (ServerSocket socket = new ServerSocket(port)) {
+        socket.setReuseAddress(true);
+        return false; // Port is free
+    } catch (IOException e) {
+        return true; // Port is in use
+    }
+}
+
     public void stop() {
         if (this.server != null) {
             this.server.stop();
             System.out.println("Socket.IO server stopped.");
+            this.waitForPortRelease(this.server.getConfiguration().getPort());
         }
     }
 }
