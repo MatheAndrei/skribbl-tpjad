@@ -1,42 +1,36 @@
 package springBoot.socket_io.events.client;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import domain.Room;
 import springBoot.socket_io.events.BasicEvent;
 
-public class UpdateAllEvent extends BasicEvent {
-    
-    public class UpdateAllEventBody implements BasicEventBody{
-        private Room room;
-    
-        public UpdateAllEventBody() {
-        }
-    
-        public UpdateAllEventBody(Room room) {
-            this.room = room;
-        }
-    
-        public Room getRoom() {
-            return this.room;
-        }
-    
-        public void setRoom(Room room) {
-            this.room = room;
-        }
-    
-        @Override
-        public String toString() {
-            return "{" +
-                " room='" + getRoom() + "'" +
-                "}";
-        }
-    }
 
+public class UpdateAllEvent extends BasicEvent<UpdateAllEventBody> {
     public UpdateAllEvent() {
         super("update_all");
     }
 
-    public UpdateAllEvent(UpdateAllEvent.UpdateAllEventBody body) {
+    public UpdateAllEvent(UpdateAllEventBody body) {
         super("update_all", body);
+    }
+
+    @JsonCreator
+    public UpdateAllEvent(String event) {
+        ObjectMapper mapper = new ObjectMapper();
+        UpdateAllEvent eventJson;
+		try {
+			eventJson = mapper.readValue(event, UpdateAllEvent.class);
+            this.name = eventJson.name;
+            this.body =  eventJson.body;
+		} catch (JsonMappingException e) {
+			e.printStackTrace();
+		} catch (JsonProcessingException e) {
+			e.printStackTrace();
+		}
     }
 
 }

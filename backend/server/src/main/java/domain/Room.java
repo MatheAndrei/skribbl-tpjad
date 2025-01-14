@@ -11,7 +11,7 @@ public class Room extends BaseEntity<String>{
     private Match match;
     private RoomStatus status;
     private RoomSettings settings;
-
+    private Integer timer;
 
     public Room() {
     }
@@ -63,6 +63,18 @@ public class Room extends BaseEntity<String>{
     public void setSettings(RoomSettings settings) {
         this.settings = settings;
     }
+
+    public Integer getTimer() {
+        return this.timer;
+    }
+
+    public void setTimer(Integer timer) {
+        this.timer = timer;
+    }
+    public void decrementTimer(){
+        this.timer--;
+    }
+
     @Override
     public String toString() {
         return "{" +

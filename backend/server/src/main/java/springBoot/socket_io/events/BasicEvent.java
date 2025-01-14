@@ -3,21 +3,29 @@ package springBoot.socket_io.events;
 import java.util.List;
 
 import com.corundumstudio.socketio.SocketIOClient;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
-public abstract class BasicEvent {
+import springBoot.socket_io.events.server.JoinRoomEvent;
+
+public class BasicEvent<T extends BasicEventBody> {
+    @JsonProperty
     protected String name;
     protected List<SocketIOClient> excludedClients;
-    protected BasicEventBody body;
+    @JsonProperty
+    protected T body;
 
-    public interface BasicEventBody {
-    
+    public BasicEvent() {
     }
 
     public BasicEvent(String name) {
         this.name = name;
     }
 
-    public BasicEvent(String name, BasicEventBody body) {
+    public BasicEvent(String name, T body) {
         this.name = name;
         this.body = body;
     }
@@ -36,4 +44,19 @@ public abstract class BasicEvent {
     public BasicEventBody getBody() {
         return this.body;
     }
+
+    // @JsonCreator
+    // public BasicEvent<E extends BasicEvent>(E event) {
+    //     ObjectMapper mapper = new ObjectMapper();
+    //     JoinRoomEvent eventJson;
+	// 	try {
+	// 		eventJson = mapper.readValue(event, E.class);
+    //         this.name = eventJson.name;
+    //         this.body =  eventJson.body;
+	// 	} catch (JsonMappingException e) {
+	// 		e.printStackTrace();
+	// 	} catch (JsonProcessingException e) {
+	// 		e.printStackTrace();
+	// 	}
+    // }
 }
