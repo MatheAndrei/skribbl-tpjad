@@ -1,6 +1,9 @@
 package domain;
 import java.util.Objects;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class User extends BaseEntity<String>{
     private String username;
 

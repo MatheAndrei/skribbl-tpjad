@@ -6,29 +6,42 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import com.corundumstudio.socketio.SocketIOClient;
 
 import domain.DrawnImage;
 import domain.Message;
 import domain.Room;
+import domain.RoomSettings;
 import domain.User;
 import domain.Word;
 import domain.enums.RoomStatus;
+import springBoot.socket_io.observer.IObservable;
+import springBoot.socket_io.observer.IObserver;
+import springBoot.socket_io.observer.ObserverEvent;
+import springBoot.socket_io.observer.ObserverEventTypes;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Service;
 
 @Service
-public class SessionService {
+public class SessionService implements IObserver{
     private Map<User, SocketIOClient> users;
     private List<User> pendingUsers;
     private List<Room> rooms;
+    private List<IObservable> subscribers;
+    private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
+
     
     public SessionService(){
         this.pendingUsers = new ArrayList<>();
         this.users = new HashMap<>();
         this.rooms = new ArrayList<>();
+        this.subscribers = new ArrayList<>();
+        startTimerThread();
     }
 
     protected String generateRoomCode(int length) {
@@ -78,8 +91,6 @@ public class SessionService {
     public boolean linkClient(SocketIOClient client, String username){
         User unlinkedUser = null;
         for (var user : pendingUsers){
-            System.out.println(user + " " +username);
-
             if (user.getUsername().equals(username)){
                 unlinkedUser = user;
                 break;
@@ -94,24 +105,56 @@ public class SessionService {
     }
 
     public Room createRoom(User host){
-        String roomId = this.generateRoomCode(6);
         Room room = new Room();
+        String roomId = this.generateRoomCode(6);
         /// should be moved
-        host.setIsHost(true);
         room.setHost(host);
         room.setId(roomId);
         room.setStatus(RoomStatus.Undefined);
         room.setPlayers(new ArrayList<>());
-
         rooms.add(room);
+        
         return room;
     }
 
+    public Room hostRoom(String username){
+        User userH = this.createUser(username);
+        Room room = this.createRoom(userH);
+        return room;
+    }
+
+    // private boolean updateExistingUser(User user){
+    //     var userSaved = this.getUserByUsername(user.getUsername());
+    //     var userSavedOld =  userSaved;
+
+    //     users.put(userSaved, users.get(userSavedOld)); 
+    //     return true;
+    // }
+
+    public boolean addRoomSettings(String roomId, RoomSettings settings){
+        var room = this.getRoomById(roomId);
+        if (room.getId() != null)
+        {
+            room.setSettings(settings);
+            this.startGame(room);
+            return true;
+        }
+        return false;
+    }
+
     public boolean joinRoom(User user, String roomId){
+        if (user.getId() == null) return false;
         Room room = this.getRoomById(roomId);
         ///shoudl be moved
-        if(room.getHost().equals(user)){
+        if(room.getHost().getUsername().equals(user.getUsername())){
             room.setStatus(RoomStatus.Waiting);
+            var host = this.getUserByUsername(user.getUsername());
+            host.setIsHost(true);
+            room.setHost(host); /// for id update and status
+        }
+        else{
+            var nonHost = this.getUserByUsername(user.getUsername());
+            nonHost.setIsHost(false);
         }
         return room.getPlayers().add(user);
     }
@@ -121,6 +164,8 @@ public class SessionService {
     }
 
     public boolean startGame(Room room){
+        /// TODO
+        this.notifyObservers(new ObserverEvent(ObserverEventTypes.MATCH_STARTED, room.getId()));
         return true;
     }
 
@@ -192,14 +237,52 @@ public class SessionService {
     }
 
     public boolean addMessage(Message message){
+        /// TODO
         return true;
     }
 
     public boolean addChosenWord(User user, Word word){
+        /// TODO
+        /// round start
+        var room = this.getClientRoom(user);
+        room.setStatus(RoomStatus.InTurn);
         return true;
     }
 
     public boolean updateDrawnImage(User user, DrawnImage image){
+        /// TODO
         return true;
+    }
+
+	@Override
+	public boolean addObserver(IObservable obs) {
+		return this.subscribers.add(obs);
+	}
+
+	@Override
+	public void notifyObservers(ObserverEvent event) {
+		for(var obs : this.subscribers){
+            obs.update(event);
+        }
+	}
+
+    private void startTimerThread() {
+        executor.scheduleAtFixedRate(() -> {
+            synchronized (rooms) {
+                for (Room room : rooms) {
+                    if(room.getStatus() == RoomStatus.InTurn){
+                        room.decrementTimer();
+                        room.setStatus(RoomStatus.Started);
+                        if (room.getTimer() <= 0) {
+                            this.timeUpForRoom(room);
+                        }
+                    }
+                }
+            }
+        }, 0, 1, TimeUnit.SECONDS);
+    }
+    private void timeUpForRoom(Room room){
+        /// TODO round end
+        this.notifyObservers(new ObserverEvent(ObserverEventTypes.TIMER_ENDED, room.getId()));
     }
 }
