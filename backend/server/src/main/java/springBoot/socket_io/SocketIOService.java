@@ -77,17 +77,46 @@ public class SocketIOService implements IObservable{
         this.server.addEventListener((new DrawEvent()).getName(), DrawEventBody.class, this.onDraw());
         this.server.addEventListener((new JoinRoomEvent()).getName(), JoinRoomEventBody.class, this.onJoinRoom());
     
+        /// for testing
         this.server.addEventListener("room_id", String.class, this.onGetRoomDataClient());
+        this.server.addEventListener("room_host", String.class, this.onHostClientRoom());
 
     }
+
+    private DataListener onGetRoomDataClient(){
+        return (client, data, ackSender) -> {
+            String roomId =  data.toString();
+            System.out.println("Room with id: " + roomId);
+
+            Room room = this.sessionService.getRoomById(roomId);
+            client.sendEvent((new UpdateAllEvent()).getName(), new UpdateAllEvent(new UpdateAllEventBody(room)));
+            // this.sentUpdateAllEvent(new UpdateAllEvent(new UpdateAllEvent().new UpdateAllEventBody(room)));
+        };
+    }
+
+    private DataListener onHostClientRoom(){
+        return (client, data, ackSender) -> {
+            String username =  data.toString();
+            System.out.println("Username for hosting : " + username);
+
+            Room room = this.sessionService.hostRoom(username);
+            client.sendEvent((new UpdateAllEvent()).getName(), new UpdateAllEvent(new UpdateAllEventBody(room)));
+            // this.sentUpdateAllEvent(new UpdateAllEvent(new UpdateAllEvent().new UpdateAllEventBody(room)));
+        };
+    }
+
 
     private DisconnectListener onDisconnect(){
         return client -> {
             // var params = client.getHandshakeData().getUrlParams();
             // String room = params.get("room").stream().collect(Collectors.joining());
             // String username = params.get("username").stream().collect(Collectors.joining());
-
+            User user = this.sessionService.getUserForClient(client);
+            Room room =  this.sessionService.getClientRoom(user);
+            client.leaveRoom(room.getId());
             this.sessionService.removeClient(client);
+
+            this.sendEventToRoom(room.getId(), new UpdateAllEvent(new UpdateAllEventBody(room)));
         };
     }
 
@@ -126,21 +155,11 @@ public class SocketIOService implements IObservable{
         });
     }
 
-    private DataListener onGetRoomDataClient(){
-        return (client, data, ackSender) -> {
-            String roomId =  data.toString();
-            System.out.println("Room with id: " + roomId);
-
-            Room room = this.sessionService.getRoomById(roomId);
-            client.sendEvent((new UpdateAllEvent()).getName(), new UpdateAllEvent(new UpdateAllEventBody(room)));
-            // this.sentUpdateAllEvent(new UpdateAllEvent(new UpdateAllEvent().new UpdateAllEventBody(room)));
-        };
-    }
-
     private DataListener onDisconnectClient(){
         return (client, data, ackSender) -> {
             User sender = ((DisconnectEventBody)data).getSender();
             String roomId = this.sessionService.getClientRoom(sender).getId();
+            client.leaveRoom(roomId);
             this.sessionService.removeUser(sender);
 
             Room room = this.sessionService.getRoomById(roomId);
@@ -190,6 +209,7 @@ public class SocketIOService implements IObservable{
             System.out.println("User " + sender.getUsername()+ " just joined the room " + roomId+ " " + result);
 
             Room room = this.sessionService.getClientRoom(sender);
+            client.joinRoom(room.getId());
             this.sendEventToRoom(room.getId(), new UpdateAllEvent(new UpdateAllEventBody(room)));
         };
     }

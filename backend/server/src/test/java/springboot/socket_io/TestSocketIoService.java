@@ -39,6 +39,8 @@ import springBoot.socket_io.events.server.ChooseWordEvent;
 import springBoot.socket_io.events.server.JoinRoomEvent;
 import springBoot.socket_io.events.server.body.ChooseWordEventBody;
 import springBoot.socket_io.events.server.body.JoinRoomEventBody;
+import springBoot.socket_io.observer.ObserverEventTypes;
+import springboot.ObservableTest;
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -85,7 +87,7 @@ public class TestSocketIoService {
     @Test
     void testConnection() throws InterruptedException, URISyntaxException {
         String testUsername = "aaa";
-        SocketIOClient client = new SocketIOClient(testingHost, testingPort);
+        SocketIOClientTest client = new SocketIOClientTest(testingHost, testingPort);
         client.connect(testUsername);
     
         Thread.sleep(1000); 
@@ -96,7 +98,7 @@ public class TestSocketIoService {
     void testConnectionLinkHost() throws InterruptedException, URISyntaxException {
         String testUsername = "aaa";
         User user = this.serviceS.createUser(testUsername);
-        SocketIOClient client = new SocketIOClient(testingHost, testingPort);
+        SocketIOClientTest client = new SocketIOClientTest(testingHost, testingPort);
         client.connect(testUsername);
         Thread.sleep(1000); 
 
@@ -109,7 +111,7 @@ public class TestSocketIoService {
     @Test
     void testConnectionLinkNonHost() throws InterruptedException, URISyntaxException {
         String testUsername = "aaa";
-        SocketIOClient client = new SocketIOClient(testingHost, testingPort);
+        SocketIOClientTest client = new SocketIOClientTest(testingHost, testingPort);
         client.connect(testUsername);
         Thread.sleep(1000); 
 
@@ -125,7 +127,7 @@ public class TestSocketIoService {
         User userH = this.serviceS.createUser(testUsername);
         Room room = this.serviceS.createRoom(userH);
 
-        SocketIOClient client = new SocketIOClient(testingHost, testingPort);
+        SocketIOClientTest client = new SocketIOClientTest(testingHost, testingPort);
         client.connect(testUsername);
         Thread.sleep(1000); 
 
@@ -142,7 +144,7 @@ public class TestSocketIoService {
         String testUsernameHost = "aaa";
         ///host
         User userH = this.serviceS.createUser(testUsernameHost);
-        SocketIOClient clientH = new SocketIOClient(testingHost, testingPort);
+        SocketIOClientTest clientH = new SocketIOClientTest(testingHost, testingPort);
         clientH.connect(testUsernameHost);
         Thread.sleep(1000); 
         Room room = this.serviceS.createRoom(userH);
@@ -151,7 +153,7 @@ public class TestSocketIoService {
         ///non host
         String testUsernameNonHost = "bbb";
         User userNH = this.serviceS.createUser(testUsernameNonHost);
-        SocketIOClient clientNH = new SocketIOClient(testingHost, testingPort);
+        SocketIOClientTest clientNH = new SocketIOClientTest(testingHost, testingPort);
         clientNH.connect(testUsernameNonHost);
         Thread.sleep(1000); 
         result = this.serviceS.joinRoom(userNH, room.getId());
@@ -171,12 +173,13 @@ public class TestSocketIoService {
     }
 
     @Test
+    /// does not work properly due to a 10y old bug in socketio client implementation for java, client does not listen fro signals
     void testConnectionJoinHostRoomSignal() throws InterruptedException, URISyntaxException {
         String testUsername = "aaa";
         User userH = this.serviceS.createUser(testUsername);
         Room room = this.serviceS.createRoom(userH);
 
-        SocketIOClient client = new SocketIOClient(testingHost, testingPort);
+        SocketIOClientTest client = new SocketIOClientTest(testingHost, testingPort);
         client.connect(testUsername);
         Thread.sleep(1000); 
 
@@ -201,59 +204,168 @@ public class TestSocketIoService {
         
         assertTrue(client.isConnected(), "Client failed to connect.");
         assertTrue(userHostS.getIsHost());
-        assertNotNull(client.room);
+        //assertNotNull(client.room);
+        assertTrue(userHostS.getIsHost());
     }
 
-    // @Test
-    // void testLeaveClient() throws InterruptedException, URISyntaxException {
-    //     String testUsername = "aaa";
-    //     User userH = this.serviceS.createUser(testUsername);
-    //     Room room = this.serviceS.createRoom(userH);
+    @Test
+    void testLeaveClientRoomEmpty() throws InterruptedException, URISyntaxException {
+        String testUsername = "aaa";
+        User userH = this.serviceS.createUser(testUsername);
+        Room room = this.serviceS.createRoom(userH);
 
-    //     SocketIOClient client = new SocketIOClient(testingHost, testingPort);
-    //     client.connect(testUsername);
-    //     Thread.sleep(1000); 
+        SocketIOClientTest client = new SocketIOClientTest(testingHost, testingPort);
+        client.connect(testUsername);
+        Thread.sleep(1000); 
 
-    //     boolean result = this.serviceS.joinRoom(userH, room.getId());
-        
-    //     User userHostS = this.serviceS.getUserByUsername(testUsername);
-        
-    //     assertTrue(client.isConnected(), "Client failed to connect.");
-    //     assertTrue(userHostS.getIsHost());
-    //     assertTrue(result);
-    // }
+        boolean result = this.serviceS.joinRoom(userH, room.getId());
+        var clientIOServer = this.serviceS.getClientByUsername(testUsername);
 
-    
+        result = this.serviceS.removeClient(clientIOServer);
+        userH = this.serviceS.getUserByUsername(testUsername);
+        room = this.serviceS.getRoomById(room.getId());
 
-    // @Test
-    // void testSocketIoEventHandling() throws URISyntaxException, InterruptedException {
-    //     // Connect to the server using a socket.io client
-    //     Socket client = IO.socket("http://" + testingHost + ":" + testingPort);
+        assertTrue(result);
+        assertNull(userH.getId());
+        assertNull(room.getId());
+    }
 
-    //     CountDownLatch latch = new CountDownLatch(1);
-    //     final StringBuilder response = new StringBuilder();
+    @Test
+    void testRemoveUserNonExistent(){
+        String testUsernameNonHost = "testNH";
+        User user = serviceS.createUser(testUsernameNonHost);
 
-    //     // Listen for the server's response
-    //     client.on("testResponse", new Emitter.Listener() {
-    //         @Override
-    //         public void call(Object... args) {
-    //             response.append((String) args[0]);
-    //             latch.countDown();
-    //         }
-    //     });
+        boolean result = this.serviceS.removeUser(user);
 
-    //     // Connect to the server
-    //     client.connect();
-    //     assertTrue(client.connected());
+        assertFalse(result);
+    }
 
-    //     // Emit an event to the server
-    //     client.emit("testEvent", "World");
+    @Test
+    void testLeaveClientRoomStillExists() throws InterruptedException, URISyntaxException {
+        String testUsernameHost = "aaa";
+        ///host
+        User userH = this.serviceS.createUser(testUsernameHost);
+        SocketIOClientTest clientH = new SocketIOClientTest(testingHost, testingPort);
+        clientH.connect(testUsernameHost);
+        Thread.sleep(1000); 
+        Room room = this.serviceS.createRoom(userH);
+        boolean result = this.serviceS.joinRoom(userH, room.getId());
+        var clientIOServerH = this.serviceS.getClientByUsername(testUsernameHost);
 
-    //     // Wait for the server response
-    //     boolean success = latch.await(5, TimeUnit.SECONDS);
-    //     assertTrue(success, "The server did not respond in time");
-    //     assertEquals("Hello World", response.toString());
+        ///non host
+        String testUsernameNonHost = "bbb";
+        User userNH = this.serviceS.createUser(testUsernameNonHost);
+        SocketIOClientTest clientNH = new SocketIOClientTest(testingHost, testingPort);
+        clientNH.connect(testUsernameNonHost);
+        Thread.sleep(1000); 
+        result = this.serviceS.joinRoom(userNH, room.getId());
+        var clientIOServerNH = this.serviceS.getClientByUsername(testUsernameNonHost);
 
-    //     client.disconnect();
-    // }
+        result = this.serviceS.removeClient(clientIOServerNH);
+
+        var userNHServer = this.serviceS.getUserByUsername(testUsernameNonHost);
+        room = this.serviceS.getRoomById(room.getId());
+        User userHostS = this.serviceS.getUserByUsername(testUsernameHost);
+
+        assertTrue(result);
+        assertNull(userNHServer.getId());
+        assertNotNull(room.getId());
+        assertEquals(room.getPlayers(), new ArrayList<User>(){{add(userHostS);}});
+    }
+
+    @Test
+    void testGetRoomId(){
+        String testUsernameHost = "testH";
+        String testUsernameNonHost = "testNH";
+        User userHost = serviceS.createUser(testUsernameHost);
+        User user = serviceS.createUser(testUsernameNonHost);
+        Room room = this.serviceS.createRoom(userHost);
+        boolean result = this.serviceS.joinRoom(userHost, room.getId());
+        result = this.serviceS.joinRoom(user, room.getId());
+
+        Room room1 = this.serviceS.getRoomById(room.getId());
+
+        assertEquals(room, room1);
+    }
+
+    @Test
+    void testMatchStarted() throws InterruptedException, URISyntaxException {
+        String testUsernameHost = "aaa";
+        ///host
+        User userH = this.serviceS.createUser(testUsernameHost);
+        SocketIOClientTest clientH = new SocketIOClientTest(testingHost, testingPort);
+        clientH.connect(testUsernameHost);
+        Thread.sleep(1000); 
+        Room room = this.serviceS.createRoom(userH);
+        boolean result = this.serviceS.joinRoom(userH, room.getId());
+        var clientIOServerH = this.serviceS.getClientByUsername(testUsernameHost);
+
+        ///non host
+        String testUsernameNonHost = "bbb";
+        User userNH = this.serviceS.createUser(testUsernameNonHost);
+        SocketIOClientTest clientNH = new SocketIOClientTest(testingHost, testingPort);
+        clientNH.connect(testUsernameNonHost);
+        Thread.sleep(1000); 
+        result = this.serviceS.joinRoom(userNH, room.getId());
+        var clientIOServerNH = this.serviceS.getClientByUsername(testUsernameNonHost);
+
+        var orbTest = new ObservableTest();
+        this.serviceS.addObserver(orbTest);
+
+        result = this.serviceS.addRoomSettings(room.getId(), new RoomSettings(1,1,1));
+
+        assertTrue(result);
+        assertEquals(orbTest.lastEvent.getEventType(), ObserverEventTypes.MATCH_STARTED);
+        assertEquals((String)orbTest.lastEvent.getBody(), room.getId());
+    }
+
+    @Test
+    void testTurnEnded() throws InterruptedException, URISyntaxException {
+        var word_test = new Word ((long)1,"test");
+        String testUsernameHost = "aaa";
+        ///host
+        User userH = this.serviceS.createUser(testUsernameHost);
+        SocketIOClientTest clientH = new SocketIOClientTest(testingHost, testingPort);
+        clientH.connect(testUsernameHost);
+        Thread.sleep(1000); 
+        Room room = this.serviceS.createRoom(userH);
+        boolean result = this.serviceS.joinRoom(userH, room.getId());
+        var clientIOServerH = this.serviceS.getClientByUsername(testUsernameHost);
+
+        ///non host
+        String testUsernameNonHost = "bbb";
+        User userNH = this.serviceS.createUser(testUsernameNonHost);
+        SocketIOClientTest clientNH = new SocketIOClientTest(testingHost, testingPort);
+        clientNH.connect(testUsernameNonHost);
+        Thread.sleep(1000); 
+        result = this.serviceS.joinRoom(userNH, room.getId());
+        var clientIOServerNH = this.serviceS.getClientByUsername(testUsernameNonHost);
+
+        var orbTest = new ObservableTest();
+        this.serviceS.addObserver(orbTest);
+        result = this.serviceS.addRoomSettings(room.getId(), new RoomSettings(1,3,1));
+
+        ChooseWordEvent event = new ChooseWordEvent(new ChooseWordEventBody(userH, word_test));
+        String eventJson = "" ;
+        try {
+            eventJson = new ObjectMapper().writeValueAsString(event.getBody());
+		} catch (JsonProcessingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+        System.out.println(eventJson);
+
+        clientH.clientSocket.emit(new ChooseWordEvent().getName(), eventJson);
+        Thread.sleep(1000);
+
+        room = this.serviceS.getRoomById(room.getId());
+
+        assertEquals(room.getStatus(), RoomStatus.InTurn);
+        Thread.sleep(3000);
+
+        room = this.serviceS.getRoomById(room.getId());
+        assertEquals(room.getStatus(), RoomStatus.Started);
+        assertEquals(orbTest.lastEvent.getEventType(), ObserverEventTypes.TIMER_ENDED);
+        assertEquals((String)orbTest.lastEvent.getBody(), room.getId());
+    }
 }

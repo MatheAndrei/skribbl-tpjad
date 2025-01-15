@@ -78,6 +78,24 @@ public class SessionService implements IObserver{
         return new User();
     }
 
+    public SocketIOClient getClientByUsername(String username){
+        for (var user : users.keySet()){
+            if (user.getUsername().equals(username)){
+                return users.get(user);
+            }
+        }
+        return null;
+    }
+
+    public User getUserForClient(SocketIOClient client){
+        for (var elem : users.entrySet()){
+            if (elem.getValue().getSessionId().equals(client.getSessionId())){
+                return elem.getKey();
+            }
+        }
+        return new User();
+    }
+
     public List<User> getUsers(){
         var ls = new ArrayList<User>();
         ls.addAll(users.keySet());
@@ -165,6 +183,7 @@ public class SessionService implements IObserver{
 
     public boolean startGame(Room room){
         /// TODO
+        room.setTimer(room.getSettings().getTimePerTurn());
         this.notifyObservers(new ObserverEvent(ObserverEventTypes.MATCH_STARTED, room.getId()));
         return true;
     }
@@ -272,9 +291,9 @@ public class SessionService implements IObserver{
                 for (Room room : rooms) {
                     if(room.getStatus() == RoomStatus.InTurn){
                         room.decrementTimer();
-                        room.setStatus(RoomStatus.Started);
                         if (room.getTimer() <= 0) {
                             this.timeUpForRoom(room);
+                            room.setStatus(RoomStatus.Started);
                         }
                     }
                 }
