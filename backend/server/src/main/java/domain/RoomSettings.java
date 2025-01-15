@@ -37,4 +37,6 @@ public class RoomSettings {
     public void setWordCount(Integer wordCount) {
         this.wordCount = wordCount;
     }
+
+
 }

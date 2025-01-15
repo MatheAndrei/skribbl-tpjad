@@ -9,18 +9,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.RequestBody;
 
 
-/*
-Request:
-POST /rooms
-BODY
-username
-Response:
-STATUS: 200
-	Body: Code room
 
- */
 @RestController
 public class HostController {
 
@@ -28,12 +20,12 @@ public class HostController {
     private SessionService roomService;
 
     @PostMapping("/rooms")
-    public ResponseEntity<String> createRoom(String username){
+    public ResponseEntity<String> createRoom(@RequestBody String username){
         if (username == null || username.isEmpty()) {
             return new ResponseEntity<>("Username is required.", HttpStatus.BAD_REQUEST);
         }
 
-        Room room = roomService.createRoom(new User(null,username));
+        Room room = roomService.hostRoom(username);
         return new ResponseEntity<>(room.getId(), HttpStatus.OK);
     }
 

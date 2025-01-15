@@ -9,14 +9,9 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import domain.*;
 import org.springframework.stereotype.Service;
 
-import domain.DrawnImage;
-import domain.Message;
-import domain.Room;
-import domain.RoomSettings;
-import domain.User;
-import domain.Word;
 import domain.enums.RoomStatus;
 import jakarta.annotation.PostConstruct;
 import lombok.NoArgsConstructor;
@@ -33,12 +28,15 @@ public class GameService implements IObserver{
     private List<Room> rooms;
     private List<IObservable> subscribers;
     private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
+    private HashMap<String, List<User>> correctUsers;
+    private final int scoreTurn = 150;
     
     @PostConstruct
     private void initService(){
         this.users = new HashMap<>();
         this.rooms = new ArrayList<>();
         this.subscribers = new ArrayList<>();
+        this.correctUsers = new HashMap<>();
         System.out.println("Game Service " + this);
         startTimerThread();
     }
@@ -89,7 +87,6 @@ public class GameService implements IObserver{
     public Room createRoom(User host){
         Room room = new Room();
         String roomId = this.generateRoomCode(6);
-        /// should be moved
         room.setHost(host);
         room.setId(roomId);
         room.setStatus(RoomStatus.Undefined);
@@ -103,15 +100,15 @@ public class GameService implements IObserver{
         boolean isDeleted = false;
         Room room = this.getUserRoom(user);
         if (room.getId() == null ) return false;
-        if(room.getHost().equals(user)){
-            // change host here
-        }
         if(room.getPlayers().contains(user)){
             room.getPlayers().remove(user);
             isDeleted = true;
         }
         if (room.getPlayers().isEmpty()){
             this.deleteRoom(room);
+        }else if(room.getHost().equals(user)){
+            room.getPlayers().get(0).setIsHost(true);
+            room.setHost(room.getPlayers().get(0));
         }
         return isDeleted;
     }
@@ -141,7 +138,6 @@ public class GameService implements IObserver{
     public boolean joinRoom(User user, String roomId){
         if (user.getId() == null) return false;
         Room room = this.getRoomById(roomId);
-        ///shoudl be moved
         if(room.getHost().getUsername().equals(user.getUsername())){
             room.setStatus(RoomStatus.Waiting);
             var host = this.getUserByUsername(user.getUsername());
@@ -183,27 +179,67 @@ public class GameService implements IObserver{
 
 
     public boolean startGame(Room room){
-        /// TODO
+        Round round = createNewRound(room);
+        Match match = new Match(round, new ArrayList<>());
+        room.setMatch(match);
         return true;
+    }
+
+    private Round createNewRound(Room room){
+        List<Turn> turns = new ArrayList<>();
+        for(var player: room.getPlayers()){
+            turns.add(new Turn(player, null,null));
+        }
+        Round round = new Round(null, turns);
+        round.nextTurn();
+        return round;
     }
 
     public boolean addMessage(Message message){
-        /// TODO
+        User user = message.getSender();
+        Room userRoom = this.getUserRoom(user);
+        Word chosenWord = userRoom.getMatch().getCurrentRound().getCurrentTurn().getCurrentWord();
+        checkMessageIsWord(message, chosenWord);
+        if(checkMessageIsWord(message,chosenWord)){
+            userRoom.getMatch().getChat().add(new Message(user, "User "+ user.getUsername()+" guessed the word"));
+            user.setHasGuessed(true);
+            if(!correctUsers.containsKey(userRoom.getId())){
+                correctUsers.put(userRoom.getId(), new ArrayList<>());
+            }
+            correctUsers.get(userRoom.getId()).add(user);
+            if(correctUsers.get(userRoom.getId()).size()== userRoom.getPlayers().size()-1){
+                userRoom.setStatus(RoomStatus.Started);
+                this.timeUpForRoom(userRoom);
+            }
+
+        }else{
+            userRoom.getMatch().getChat().add(message);
+        }
         return true;
     }
 
+    public boolean checkMessageIsWord(Message message, Word word ){
+        if(message.getMessage().equals(word.getWord())){
+            return true;
+        }
+        return false;
+    }
+
     public boolean addChosenWord(User user, Word word){
-        /// TODO
+
         /// round start
         var room = this.getUserRoom(user);
         this.notifyObservers(new ObserverEvent(ObserverEventTypes.TIMER_STARTED, room.getId()));
-        room.setStatus(RoomStatus.InTurn);
+        room.getMatch().getCurrentRound().getCurrentTurn().getDrawerUser().setIsDrawer(true);
+        room.getMatch().getCurrentRound().getCurrentTurn().setCurrentWord(word);
         room.setTimer(room.getSettings().getTimePerTurn());
+        room.setStatus(RoomStatus.InTurn);
         return true;
     }
 
     public boolean updateDrawnImage(User user, DrawnImage image){
-        /// TODO
+        Room room = getUserRoom(user);
+        room.getMatch().getCurrentRound().getCurrentTurn().setImage(image);
         return true;
     }
 
@@ -241,10 +277,30 @@ public class GameService implements IObserver{
             }
         }, 0, 1, TimeUnit.SECONDS);
     }
-    // moved
+
+    public void calculateScores(User userDrawer,List<User> correctUsersPerRoom){
+        for(User user: correctUsersPerRoom){
+            user.setScore(user.getScore()+scoreTurn-correctUsersPerRoom.indexOf(user)*50);
+        }
+        userDrawer.setScore(userDrawer.getScore()+50*correctUsersPerRoom.size());
+        correctUsersPerRoom.clear();
+    }
+
+
+
     private void timeUpForRoom(Room room){
-        /// TODO round end
+        calculateScores(room.getMatch().getCurrentRound().getCurrentTurn().getDrawerUser(), correctUsers.get(room.getId()));
         this.notifyObservers(new ObserverEvent(ObserverEventTypes.TIMER_ENDED, room.getId()));
+        room.getMatch().getCurrentRound().nextTurn();
+        if(room.getMatch().getCurrentRound().getCurrentTurn() == null){
+            if(room.getMatch().getCurrentRoundNum()>=room.getSettings().getNumRounds()-1){
+                this.notifyObservers(new ObserverEvent(ObserverEventTypes.MATCH_ENDED, room.getId()));
+            }else{
+                Round round = createNewRound(room);
+                room.getMatch().setCurrentRound(round);
+                room.getMatch().incrementCurrentRoundNum();
+            }
+        }
         /// TODO check if match end
         this.notifyObservers(new ObserverEvent(ObserverEventTypes.TIMER_ENDED, room.getId()));
     }

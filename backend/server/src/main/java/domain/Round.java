@@ -16,6 +16,16 @@ public class Round extends BaseEntity<Long>{
         this.turns = turns;
     }
 
+    public void nextTurn(){
+        if(turns.isEmpty()){
+            this.currentTurn = null;
+        }else{
+            this.currentTurn = turns.getFirst();
+            turns.remove(0);
+        }
+
+    }
+
     public Turn getCurrentTurn() {
         return this.currentTurn;
     }
