@@ -3,6 +3,7 @@ package springBoot.socket_io;
 import com.corundumstudio.socketio.SocketIOServer;
 
 import domain.Room;
+import springBoot.service.SessionService;
 
 /**
  * Only for testing purposes!!!

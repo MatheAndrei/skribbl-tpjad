@@ -1,7 +1,6 @@
-package springBoot.socket_io;
+package springBoot.service;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -10,7 +9,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import com.corundumstudio.socketio.SocketIOClient;
+import org.springframework.stereotype.Service;
 
 import domain.DrawnImage;
 import domain.Message;
@@ -19,28 +18,28 @@ import domain.RoomSettings;
 import domain.User;
 import domain.Word;
 import domain.enums.RoomStatus;
+import jakarta.annotation.PostConstruct;
+import lombok.NoArgsConstructor;
 import springBoot.socket_io.observer.IObservable;
 import springBoot.socket_io.observer.IObserver;
 import springBoot.socket_io.observer.ObserverEvent;
 import springBoot.socket_io.observer.ObserverEventTypes;
 
-import org.springframework.context.annotation.Bean;
-import org.springframework.stereotype.Service;
-
 @Service
-public class SessionService implements IObserver{
-    private Map<User, SocketIOClient> users;
-    private List<User> pendingUsers;
+@NoArgsConstructor
+public class GameService implements IObserver{
+    
+    private Map<String, User> users; 
     private List<Room> rooms;
     private List<IObservable> subscribers;
     private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
-
     
-    public SessionService(){
-        this.pendingUsers = new ArrayList<>();
+    @PostConstruct
+    private void initService(){
         this.users = new HashMap<>();
         this.rooms = new ArrayList<>();
         this.subscribers = new ArrayList<>();
+        System.out.println("Game Service " + this);
         startTimerThread();
     }
 
@@ -56,41 +55,20 @@ public class SessionService implements IObserver{
         return saltStr;
     }
 
-
     public User createUser(String username){
         User user =  new User();
-        /// should be move
         user.setUsername(username);
         user.setIsDrawer(null);
         user.setIsHost(null);
         user.setHasGuessed(null);
-
-        pendingUsers.add(user);
+        users.put(username, user);
         return user;
     }
 
     public User getUserByUsername(String username){
-        for (var user : users.keySet()){
-            if (user.getUsername().equals(username)){
-                return user;
-            }
-        }
-        return new User();
-    }
-
-    public SocketIOClient getClientByUsername(String username){
-        for (var user : users.keySet()){
-            if (user.getUsername().equals(username)){
-                return users.get(user);
-            }
-        }
-        return null;
-    }
-
-    public User getUserForClient(SocketIOClient client){
-        for (var elem : users.entrySet()){
-            if (elem.getValue().getSessionId().equals(client.getSessionId())){
-                return elem.getKey();
+        for (var userN : users.keySet()){
+            if (userN.equals(username)){
+                return users.get(userN);
             }
         }
         return new User();
@@ -98,28 +76,14 @@ public class SessionService implements IObserver{
 
     public List<User> getUsers(){
         var ls = new ArrayList<User>();
-        ls.addAll(users.keySet());
+        ls.addAll(users.values());
         return ls;
     }
 
-    public List<User> getPendingUsers(){
-        return pendingUsers;
-    }
-
-    public boolean linkClient(SocketIOClient client, String username){
-        User unlinkedUser = null;
-        for (var user : pendingUsers){
-            if (user.getUsername().equals(username)){
-                unlinkedUser = user;
-                break;
-            }
-        }
-        if (unlinkedUser != null){
-            unlinkedUser.setId(client.getSessionId().toString());
-            users.put(unlinkedUser, client);
-            pendingUsers.remove(unlinkedUser);
-        }
-        return unlinkedUser != null;
+    public boolean updateExistingUser(User user){
+        var userSaved = this.getUserByUsername(user.getUsername());
+        users.put(userSaved.getUsername(), user); 
+        return true;
     }
 
     public Room createRoom(User host){
@@ -135,19 +99,32 @@ public class SessionService implements IObserver{
         return room;
     }
 
+    private boolean removeUserFromRoom(User user){
+        boolean isDeleted = false;
+        Room room = this.getUserRoom(user);
+        if (room.getId() == null ) return false;
+        if(room.getHost().equals(user)){
+            // change host here
+        }
+        if(room.getPlayers().contains(user)){
+            room.getPlayers().remove(user);
+            isDeleted = true;
+        }
+        if (room.getPlayers().isEmpty()){
+            this.deleteRoom(room);
+        }
+        return isDeleted;
+    }
+
+    public boolean removeUser(User user){
+        return this.users.remove(user.getUsername()) != null && this.removeUserFromRoom(user);
+    }
+
     public Room hostRoom(String username){
         User userH = this.createUser(username);
         Room room = this.createRoom(userH);
         return room;
     }
-
-    // private boolean updateExistingUser(User user){
-    //     var userSaved = this.getUserByUsername(user.getUsername());
-    //     var userSavedOld =  userSaved;
-
-    //     users.put(userSaved, users.get(userSavedOld)); 
-    //     return true;
-    // }
 
     public boolean addRoomSettings(String roomId, RoomSettings settings){
         var room = this.getRoomById(roomId);
@@ -177,58 +154,8 @@ public class SessionService implements IObserver{
         }
         return room.getPlayers().add(user);
     }
-
-    private boolean deleteRoom(Room room){
-        return rooms.remove(room);
-    }
-
-    public boolean startGame(Room room){
-        /// TODO
-        room.setTimer(room.getSettings().getTimePerTurn());
-        this.notifyObservers(new ObserverEvent(ObserverEventTypes.MATCH_STARTED, room.getId()));
-        return true;
-    }
-
-    private boolean removeUserFromRoom(User user){
-        boolean isDeleted = false;
-        Room room = this.getClientRoom(user);
-        if (room.getId() == null ) return false;
-        if(room.getHost().equals(user)){
-            // change host here
-        }
-        if(room.getPlayers().contains(user)){
-            room.getPlayers().remove(user);
-            isDeleted = true;
-        }
-        if (room.getPlayers().isEmpty()){
-            this.deleteRoom(room);
-        }
-        return isDeleted;
-    }
-
-    public boolean removeClient(SocketIOClient client){
-        User userToDelete = null;
-        for (var entry : users.entrySet()){
-            if(entry.getValue().equals(client)){
-                userToDelete = entry.getKey();
-            }
-        }
-        return userToDelete != null && this.removeUser(userToDelete);
-    }
-
-    public boolean removeUser(User user){
-        return (pendingUsers.remove(user) || this.users.remove(user) != null) && this.removeUserFromRoom(user);
-    }
-
-    public List<SocketIOClient> getSocketIOClientsForRoom(Room room){
-        var socketIoClients = new ArrayList<SocketIOClient>();
-        for(var user : room.getPlayers()){
-            socketIoClients.add(users.get(user));
-        }
-        return socketIoClients;
-    }
-
-    public Room getClientRoom(User user){
+    
+    public Room getUserRoom(User user){
         Room roomToSend = new Room();
         for (var room : rooms){
             if(room.getPlayers().contains(user)){
@@ -250,10 +177,14 @@ public class SessionService implements IObserver{
         return roomToSend;
     }
 
-    public void reset(){
-        this.pendingUsers = new ArrayList<>();
-        this.users = new HashMap<>();
-        this.rooms = new ArrayList<>();
+    private boolean deleteRoom(Room room){
+        return rooms.remove(room);
+    }
+
+
+    public boolean startGame(Room room){
+        /// TODO
+        return true;
     }
 
     public boolean addMessage(Message message){
@@ -264,9 +195,10 @@ public class SessionService implements IObserver{
     public boolean addChosenWord(User user, Word word){
         /// TODO
         /// round start
-        var room = this.getClientRoom(user);
+        var room = this.getUserRoom(user);
         this.notifyObservers(new ObserverEvent(ObserverEventTypes.TIMER_STARTED, room.getId()));
         room.setStatus(RoomStatus.InTurn);
+        room.setTimer(room.getSettings().getTimePerTurn());
         return true;
     }
 
@@ -275,10 +207,16 @@ public class SessionService implements IObserver{
         return true;
     }
 
-	@Override
+    public void reset(){
+        this.users = new HashMap<>();
+        this.rooms = new ArrayList<>();
+    }
+
+    @Override
 	public boolean addObserver(IObservable obs) {
 		return this.subscribers.add(obs);
 	}
+
 
 	@Override
 	public void notifyObservers(ObserverEvent event) {
@@ -288,6 +226,7 @@ public class SessionService implements IObserver{
 	}
 
     private void startTimerThread() {
+        System.out.println("Thread timer started");
         executor.scheduleAtFixedRate(() -> {
             synchronized (rooms) {
                 for (Room room : rooms) {
@@ -302,6 +241,7 @@ public class SessionService implements IObserver{
             }
         }, 0, 1, TimeUnit.SECONDS);
     }
+    // moved
     private void timeUpForRoom(Room room){
         /// TODO round end
         this.notifyObservers(new ObserverEvent(ObserverEventTypes.TIMER_ENDED, room.getId()));

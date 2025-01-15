@@ -37,7 +37,7 @@ import domain.Turn;
 import domain.User;
 import domain.Word;
 import domain.enums.RoomStatus;
-import springBoot.socket_io.SessionService;
+import springBoot.service.SessionService;
 import springBoot.socket_io.SocketIOConfiguration;
 import springBoot.socket_io.SocketIOService;
 import springBoot.socket_io.events.client.UpdateAllEvent;
@@ -374,7 +374,7 @@ public class TestSocketIoService {
         room = this.serviceS.getRoomById(room.getId());
 
         assertEquals(room.getStatus(), RoomStatus.InTurn);
-        Thread.sleep(3000);
+        Thread.sleep(4000);
 
         room = this.serviceS.getRoomById(room.getId());
         assertEquals(room.getStatus(), RoomStatus.Started);

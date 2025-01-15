@@ -26,6 +26,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.*;
 
+import springBoot.service.SessionService;
 import springBoot.socket_io.events.BasicEvent;
 import springBoot.socket_io.events.client.MatchEndedEvent;
 import springBoot.socket_io.events.client.TimerEndedEvent;
@@ -103,19 +104,16 @@ public class SocketIOService implements IObservable{
 
             Room room = this.sessionService.hostRoom(username);
             client.sendEvent((new UpdateAllEvent()).getName(), new UpdateAllEvent(new UpdateAllEventBody(room)));
-            // this.sentUpdateAllEvent(new UpdateAllEvent(new UpdateAllEvent().new UpdateAllEventBody(room)));
         };
     }
 
 
     private DisconnectListener onDisconnect(){
         return client -> {
-            // var params = client.getHandshakeData().getUrlParams();
-            // String room = params.get("room").stream().collect(Collectors.joining());
-            // String username = params.get("username").stream().collect(Collectors.joining());
             User user = this.sessionService.getUserForClient(client);
-            Room room =  this.sessionService.getClientRoom(user);
-            client.leaveRoom(room.getId());
+            Room room =  this.sessionService.getUserRoom(user);
+            if (room.getId() != null)
+                client.leaveRoom(room.getId());
             this.sessionService.removeClient(client);
 
             this.sendEventToRoom(room.getId(), new UpdateAllEvent(new UpdateAllEventBody(room)));
@@ -142,9 +140,10 @@ public class SocketIOService implements IObservable{
     }
 
     private void sendEventToRoom(String roomId, BasicEvent event){
+        if(roomId == null) return;
         System.out.println("Send updates to room: " + roomId);
         server.getRoomOperations(roomId).getClients().forEach(cl -> {
-            if (!event.getExcludedClients().contains(cl)){
+            if (event.getExcludedClients() != null && !event.getExcludedClients().contains(cl)){
                 String eventJson = "" ;
                 try {
                     eventJson = new ObjectMapper().writeValueAsString(event.getBody());
@@ -160,8 +159,9 @@ public class SocketIOService implements IObservable{
     private DataListener onDisconnectClient(){
         return (client, data, ackSender) -> {
             User sender = ((DisconnectEventBody)data).getSender();
-            String roomId = this.sessionService.getClientRoom(sender).getId();
-            client.leaveRoom(roomId);
+            String roomId = this.sessionService.getUserRoom(sender).getId();
+            if (roomId != null)
+                client.leaveRoom(roomId);
             this.sessionService.removeUser(sender);
 
             Room room = this.sessionService.getRoomById(roomId);
@@ -174,7 +174,7 @@ public class SocketIOService implements IObservable{
             Message message = ((ChatMessageEventBody)data).getMessage();
             this.sessionService.addMessage(message);
 
-            Room room = this.sessionService.getClientRoom(message.getSender());
+            Room room = this.sessionService.getUserRoom(message.getSender());
             this.sendEventToRoom(room.getId(), new UpdateAllEvent(new UpdateAllEventBody(room)));
         };
     }
@@ -185,7 +185,7 @@ public class SocketIOService implements IObservable{
             Word word = ((ChooseWordEventBody)data).getWord();
             this.sessionService.addChosenWord(sender, word);
 
-            Room room = this.sessionService.getClientRoom(sender);
+            Room room = this.sessionService.getUserRoom(sender);
             this.sendEventToRoom(room.getId(), new UpdateAllEvent(new UpdateAllEventBody(room)));
         };
     }
@@ -196,7 +196,7 @@ public class SocketIOService implements IObservable{
             DrawnImage image = ((DrawEventBody)data).getImage();
             this.sessionService.updateDrawnImage(sender, image);
 
-            Room room = this.sessionService.getClientRoom(sender);
+            Room room = this.sessionService.getUserRoom(sender);
             UpdateAllEvent event = new UpdateAllEvent(new UpdateAllEventBody(room));
             event.addExcludedClients(client); // exlude the client that is drawing so that he con continue to draw in peace
             this.sendEventToRoom(room.getId(), event); 
@@ -212,7 +212,7 @@ public class SocketIOService implements IObservable{
             System.out.println("User " + username + " joined the room " + roomId+ " ? " + result);
             if (result) {
                 // Success response
-                Room room = this.sessionService.getClientRoom(userSaved);
+                Room room = this.sessionService.getUserRoom(userSaved);
                 client.joinRoom(room.getId());
                 this.sendEventToRoom(room.getId(), new UpdateAllEvent(new UpdateAllEventBody(room)));
                 if (ackSender != null) {
