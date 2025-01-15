@@ -13,6 +13,7 @@ import org.junit.jupiter.api.AfterEach;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -27,12 +28,17 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import domain.Room;
+import domain.RoomSettings;
 import domain.User;
+import domain.Word;
+import domain.enums.RoomStatus;
 import springBoot.socket_io.SessionService;
 import springBoot.socket_io.SocketIOConfiguration;
 import springBoot.socket_io.SocketIOService;
+import springBoot.socket_io.events.server.ChooseWordEvent;
 import springBoot.socket_io.events.server.JoinRoomEvent;
-import springBoot.socket_io.events.server.JoinRoomEventBody;
+import springBoot.socket_io.events.server.body.ChooseWordEventBody;
+import springBoot.socket_io.events.server.body.JoinRoomEventBody;
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -43,84 +49,38 @@ public class TestSocketIoService {
     private Integer testingPort;
     @Autowired
     private SessionService serviceS;
-    //@Autowired
-    // private SocketIOService service;
 
-    //private SocketIOClient client;
-    // private Thread serverThread;
 
-    // private boolean isPortFree(String host, int port) {
-       
-            
-    //         try (Socket socket = new Socket()) {
-    //             socket.connect(new InetSocketAddress(host, port), 100); // Timeout of 100 ms
-    //             System.out.println("Port " + port + " is in use.");
-    //         } catch (IOException e) {
-    //             // If an IOException occurs, the port is considered free
-    //             System.out.println("Port " + port + " is free.");
-    //             return true;
-    //         }
-            
-    //     return false; // Port is still in use after retries
-    // }
-
-    // @BeforeEach
-    // void startServer() {
-    //     serverThread = new Thread(() -> {
-    //         int maxRetries = 5;
-    //         int retryCount = 0;
-    //         try {
-    //             server = new SocketIOConfiguration(testingHost, testingPort).createSocketIOServer();
-    //             serviceS = new SessionService();
-    //             service = new SocketIOService(server, serviceS);
-    //             while (retryCount < maxRetries) {
-    //                 service.start();
-    //                 try {
-    //                     Thread.sleep(1000); 
-    //                 } catch (InterruptedException ie) {
-    //                     System.err.println("Thread interrupted while waiting: " + ie.getMessage());
-    //                 }
-    //                 retryCount++;
-    //             }
-    //             while (!Thread.currentThread().isInterrupted()) {
-    //                 Thread.sleep(100); // Check periodically for interruption
-    //             }
-
-    //         } catch (InterruptedException e) {
-    //             service.stop();
-    //             Thread.currentThread().interrupt();
-    //         } catch (Exception e) {
-    //             throw new RuntimeException("Error while starting the server", e);
-    //         }
-    //     });
-    
-    //     serverThread.start();
-    //     try {
-	// 		Thread.currentThread().sleep(1000);
-	// 	} catch (InterruptedException e) {
-	// 		e.printStackTrace();
-	// 	} 
-    // }
-
-    // @AfterEach
-    // void stopServer() {
-    //     if (serverThread != null && serverThread.isAlive()) {
-    //         serverThread.interrupt();
-    //         try {
-    //             serverThread.join();
-    //             Thread.currentThread().sleep(1000);
-    //         } catch (InterruptedException e) {
-    //             Thread.currentThread().interrupt();
-    //             e.printStackTrace();
-    //             throw new RuntimeException("Error while stopping the server", e);
-    //         }
-    //     }
-    // }
 
     @BeforeEach
     void resetService(){
         this.serviceS.reset();
     }
+
+    @Test
+    void testCreateUser(){
+        String testUsername= "test";
+        User user = serviceS.createUser(testUsername);
+
+        assertNull(user.getId());
+        assertEquals(user.getUsername(), testUsername);
+        assertNull(user.hasGuessed());
+        assertNull(user.isDrawer());
+        assertNull(user.isIsHost());
+    } 
+
+    @Test
+    void testCreateRoom(){
+        String testUsername= "test";
+        User user = serviceS.createUser(testUsername);
+        Room room = this.serviceS.createRoom(user);
+
+        assertNotNull(room.getId());
+        assertEquals(room.getHost(), user);
+        assertEquals(room.getStatus(),RoomStatus.Undefined);
+        assertEquals(room.getPlayers().size(),0);
+    }
+
 
     @Test
     void testConnection() throws InterruptedException, URISyntaxException {

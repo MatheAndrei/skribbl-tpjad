@@ -11,6 +11,8 @@ public class User extends BaseEntity<String>{
     private Boolean isDrawer;
     private Boolean isHost;
 
+    private Integer score;
+
     public User() {
     }
 
@@ -92,6 +94,14 @@ public class User extends BaseEntity<String>{
         return this.isHost;
     }
 
+    public Integer getScore() {
+        return this.score;
+    }
+
+    public void setScore(Integer score) {
+        this.score = score;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (o == this)
@@ -116,6 +126,7 @@ public class User extends BaseEntity<String>{
             ", hasGuessed='" + isHasGuessed() + "'" +
             ", isDrawer='" + isIsDrawer() + "'" +
             ", isHost='" + isIsHost() + "'" +
+            ", score='" + getScore() + "'" +
             "}";
     }    
     

@@ -1,4 +1,4 @@
-package springBoot.socket_io.events.client;
+package springBoot.socket_io.events.client.body;
 
 import springBoot.socket_io.events.BasicEventBody;
 

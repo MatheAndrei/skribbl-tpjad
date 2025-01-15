@@ -5,17 +5,16 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import domain.Room;
 import springBoot.socket_io.events.BasicEvent;
-
+import springBoot.socket_io.events.client.body.UpdateAllEventBody;
 
 public class UpdateAllEvent extends BasicEvent<UpdateAllEventBody> {
     public UpdateAllEvent() {
-        super("update_all");
+        super(ClientEventNames.UPDATE_ALL);
     }
 
     public UpdateAllEvent(UpdateAllEventBody body) {
-        super("update_all", body);
+        super(ClientEventNames.UPDATE_ALL, body);
     }
 
     @JsonCreator
