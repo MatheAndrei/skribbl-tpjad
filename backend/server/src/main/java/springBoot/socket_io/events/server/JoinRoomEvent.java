@@ -6,6 +6,8 @@ import lombok.Builder;
 import lombok.extern.jackson.Jacksonized;
 import springBoot.socket_io.events.BasicEvent;
 import springBoot.socket_io.events.BasicEventBody;
+import springBoot.socket_io.events.server.body.JoinRoomEventBody;
+
 import java.util.Objects;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -17,11 +19,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 //@Jacksonized @Builder
 public class JoinRoomEvent extends BasicEvent<JoinRoomEventBody>{
     public JoinRoomEvent() {
-        super("join_room");
+        super(ServerEventNames.JOIN_ROOM);
     }
 
     public JoinRoomEvent(JoinRoomEventBody body) {
-        super("join_room", body);
+        super(ServerEventNames.JOIN_ROOM, body);
     }
 
     @JsonCreator

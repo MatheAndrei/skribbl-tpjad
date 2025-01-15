@@ -4,6 +4,14 @@ public class Message extends BaseEntity<Long>{
     private User sender;
     private String message;
 
+    public Message() {
+    }
+
+    public Message(User sender, String message) {
+        this.sender = sender;
+        this.message = message;
+    }
+
     public User getSender() {
         return this.sender;
     }

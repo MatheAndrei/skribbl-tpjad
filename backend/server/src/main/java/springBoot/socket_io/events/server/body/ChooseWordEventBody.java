@@ -1,4 +1,9 @@
-package springBoot.socket_io.events.server;
+package springBoot.socket_io.events.server.body;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import domain.User;
 import domain.Word;
@@ -14,6 +19,21 @@ public class ChooseWordEventBody extends BasicEventBody{
     public ChooseWordEventBody(User Sender, Word word) {
         this.sender = Sender;
         this.word = word;
+    }
+
+    @JsonCreator
+    public ChooseWordEventBody(String body) {
+        ObjectMapper mapper = new ObjectMapper();
+        ChooseWordEventBody bodyJson;
+        try {
+            bodyJson = mapper.readValue(body, ChooseWordEventBody.class);
+            this.sender = bodyJson.sender;
+            this.word =  bodyJson.word;
+        } catch (JsonMappingException e) {
+            e.printStackTrace();
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
     }
 
     public User getSender() {

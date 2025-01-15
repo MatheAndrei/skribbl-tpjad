@@ -26,20 +26,23 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.*;
 
+import springBoot.service.SessionService;
 import springBoot.socket_io.events.BasicEvent;
+import springBoot.socket_io.events.client.MatchEndedEvent;
 import springBoot.socket_io.events.client.TimerEndedEvent;
+import springBoot.socket_io.events.client.TimerStartedEvent;
 import springBoot.socket_io.events.client.UpdateAllEvent;
-import springBoot.socket_io.events.client.UpdateAllEventBody;
+import springBoot.socket_io.events.client.body.UpdateAllEventBody;
 import springBoot.socket_io.events.server.ChatMessageEvent;
-import springBoot.socket_io.events.server.ChatMessageEventBody;
+import springBoot.socket_io.events.server.body.ChatMessageEventBody;
 import springBoot.socket_io.events.server.ChooseWordEvent;
-import springBoot.socket_io.events.server.ChooseWordEventBody;
+import springBoot.socket_io.events.server.body.ChooseWordEventBody;
 import springBoot.socket_io.events.server.DisconnectEvent;
-import springBoot.socket_io.events.server.DisconnectEventBody;
+import springBoot.socket_io.events.server.body.DisconnectEventBody;
 import springBoot.socket_io.events.server.DrawEvent;
-import springBoot.socket_io.events.server.DrawEventBody;
+import springBoot.socket_io.events.server.body.DrawEventBody;
 import springBoot.socket_io.events.server.JoinRoomEvent;
-import springBoot.socket_io.events.server.JoinRoomEventBody;
+import springBoot.socket_io.events.server.body.JoinRoomEventBody;
 import springBoot.socket_io.observer.IObservable;
 import springBoot.socket_io.observer.IObserver;
 import springBoot.socket_io.observer.ObserverEvent;
@@ -77,17 +80,43 @@ public class SocketIOService implements IObservable{
         this.server.addEventListener((new DrawEvent()).getName(), DrawEventBody.class, this.onDraw());
         this.server.addEventListener((new JoinRoomEvent()).getName(), JoinRoomEventBody.class, this.onJoinRoom());
     
+        /// for testing
         this.server.addEventListener("room_id", String.class, this.onGetRoomDataClient());
+        this.server.addEventListener("room_host", String.class, this.onHostClientRoom());
 
     }
 
+    private DataListener onGetRoomDataClient(){
+        return (client, data, ackSender) -> {
+            String roomId =  data.toString();
+            System.out.println("Room with id: " + roomId);
+
+            Room room = this.sessionService.getRoomById(roomId);
+            client.sendEvent((new UpdateAllEvent()).getName(), new UpdateAllEvent(new UpdateAllEventBody(room)));
+            // this.sentUpdateAllEvent(new UpdateAllEvent(new UpdateAllEvent().new UpdateAllEventBody(room)));
+        };
+    }
+
+    private DataListener onHostClientRoom(){
+        return (client, data, ackSender) -> {
+            String username =  data.toString();
+            System.out.println("Username for hosting : " + username);
+
+            Room room = this.sessionService.hostRoom(username);
+            client.sendEvent((new UpdateAllEvent()).getName(), new UpdateAllEvent(new UpdateAllEventBody(room)));
+        };
+    }
+
+
     private DisconnectListener onDisconnect(){
         return client -> {
-            // var params = client.getHandshakeData().getUrlParams();
-            // String room = params.get("room").stream().collect(Collectors.joining());
-            // String username = params.get("username").stream().collect(Collectors.joining());
-
+            User user = this.sessionService.getUserForClient(client);
+            Room room =  this.sessionService.getUserRoom(user);
+            if (room.getId() != null)
+                client.leaveRoom(room.getId());
             this.sessionService.removeClient(client);
+
+            this.sendEventToRoom(room.getId(), new UpdateAllEvent(new UpdateAllEventBody(room)));
         };
     }
 
@@ -111,9 +140,10 @@ public class SocketIOService implements IObservable{
     }
 
     private void sendEventToRoom(String roomId, BasicEvent event){
+        if(roomId == null) return;
         System.out.println("Send updates to room: " + roomId);
         server.getRoomOperations(roomId).getClients().forEach(cl -> {
-            if (!event.getExcludedClients().contains(cl)){
+            if (event.getExcludedClients() != null && !event.getExcludedClients().contains(cl)){
                 String eventJson = "" ;
                 try {
                     eventJson = new ObjectMapper().writeValueAsString(event.getBody());
@@ -126,21 +156,12 @@ public class SocketIOService implements IObservable{
         });
     }
 
-    private DataListener onGetRoomDataClient(){
-        return (client, data, ackSender) -> {
-            String roomId =  data.toString();
-            System.out.println("Room with id: " + roomId);
-
-            Room room = this.sessionService.getRoomById(roomId);
-            client.sendEvent((new UpdateAllEvent()).getName(), new UpdateAllEvent(new UpdateAllEventBody(room)));
-            // this.sentUpdateAllEvent(new UpdateAllEvent(new UpdateAllEvent().new UpdateAllEventBody(room)));
-        };
-    }
-
     private DataListener onDisconnectClient(){
         return (client, data, ackSender) -> {
             User sender = ((DisconnectEventBody)data).getSender();
-            String roomId = this.sessionService.getClientRoom(sender).getId();
+            String roomId = this.sessionService.getUserRoom(sender).getId();
+            if (roomId != null)
+                client.leaveRoom(roomId);
             this.sessionService.removeUser(sender);
 
             Room room = this.sessionService.getRoomById(roomId);
@@ -153,7 +174,7 @@ public class SocketIOService implements IObservable{
             Message message = ((ChatMessageEventBody)data).getMessage();
             this.sessionService.addMessage(message);
 
-            Room room = this.sessionService.getClientRoom(message.getSender());
+            Room room = this.sessionService.getUserRoom(message.getSender());
             this.sendEventToRoom(room.getId(), new UpdateAllEvent(new UpdateAllEventBody(room)));
         };
     }
@@ -164,7 +185,7 @@ public class SocketIOService implements IObservable{
             Word word = ((ChooseWordEventBody)data).getWord();
             this.sessionService.addChosenWord(sender, word);
 
-            Room room = this.sessionService.getClientRoom(sender);
+            Room room = this.sessionService.getUserRoom(sender);
             this.sendEventToRoom(room.getId(), new UpdateAllEvent(new UpdateAllEventBody(room)));
         };
     }
@@ -175,7 +196,7 @@ public class SocketIOService implements IObservable{
             DrawnImage image = ((DrawEventBody)data).getImage();
             this.sessionService.updateDrawnImage(sender, image);
 
-            Room room = this.sessionService.getClientRoom(sender);
+            Room room = this.sessionService.getUserRoom(sender);
             UpdateAllEvent event = new UpdateAllEvent(new UpdateAllEventBody(room));
             event.addExcludedClients(client); // exlude the client that is drawing so that he con continue to draw in peace
             this.sendEventToRoom(room.getId(), event); 
@@ -184,13 +205,26 @@ public class SocketIOService implements IObservable{
 
     private DataListener onJoinRoom(){
         return (client, data, ackSender) -> {
-            User sender = ((JoinRoomEventBody)data).getSender();
+            String username = ((JoinRoomEventBody)data).getUsername();
             String roomId = ((JoinRoomEventBody)data).getRoomId();
-            boolean result = this.sessionService.joinRoom(sender, roomId);
-            System.out.println("User " + sender.getUsername()+ " just joined the room " + roomId+ " " + result);
-
-            Room room = this.sessionService.getClientRoom(sender);
-            this.sendEventToRoom(room.getId(), new UpdateAllEvent(new UpdateAllEventBody(room)));
+            User userSaved = this.sessionService.getUserByUsername(username);
+            boolean result = this.sessionService.joinRoom(userSaved, roomId);
+            System.out.println("User " + username + " joined the room " + roomId+ " ? " + result);
+            if (result) {
+                // Success response
+                Room room = this.sessionService.getUserRoom(userSaved);
+                client.joinRoom(room.getId());
+                this.sendEventToRoom(room.getId(), new UpdateAllEvent(new UpdateAllEventBody(room)));
+                if (ackSender != null) {
+                    ackSender.sendAckData("success");
+                }
+            } else {
+                // Failure response
+                if (ackSender != null) {
+                    ackSender.sendAckData("failure");
+                }
+            }
+            
         };
     }
 
@@ -243,13 +277,22 @@ public class SocketIOService implements IObservable{
         Room room;
         switch (event.getEventType()) {
             case ObserverEventTypes.MATCH_STARTED:
+            case ObserverEventTypes.NEW_SETTINGS:
                 roomId = (String)event.getBody();
                 room = this.sessionService.getRoomById(roomId);
                 this.sendEventToRoom(roomId, new UpdateAllEvent(new UpdateAllEventBody(room)));
                 break;
+            case ObserverEventTypes.TIMER_STARTED:
+                roomId = (String)event.getBody();
+                this.sendEventToRoom(roomId, new TimerStartedEvent());
+                break;
             case ObserverEventTypes.TIMER_ENDED:
                 roomId = (String)event.getBody();
                 this.sendEventToRoom(roomId, new TimerEndedEvent());
+                break;
+                case ObserverEventTypes.MATCH_ENDED:
+                roomId = (String)event.getBody();
+                this.sendEventToRoom(roomId, new MatchEndedEvent());
                 break;
             default:
                 break;

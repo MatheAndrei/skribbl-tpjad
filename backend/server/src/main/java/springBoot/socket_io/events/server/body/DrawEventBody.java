@@ -1,48 +1,40 @@
-package springBoot.socket_io.events.server;
+package springBoot.socket_io.events.server.body;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import domain.DrawnImage;
 import domain.User;
 import springBoot.socket_io.events.BasicEventBody;
 
-public class JoinRoomEventBody extends BasicEventBody{
-    @JsonProperty
+public class DrawEventBody extends BasicEventBody{
     private User sender;
-    @JsonProperty
-    private String roomId;
+    private DrawnImage image;
 
-
-    public JoinRoomEventBody() {
+    public DrawEventBody() {
     }
 
-    // public JoinRoomEventBody(User sender, String roomId) {
-    //     this.sender = sender;
-    //     this.roomId = roomId;
-    // }
-    public JoinRoomEventBody(User sender, String roomId) {
+    public DrawEventBody(User sender, DrawnImage image) {
         this.sender = sender;
-        this.roomId = roomId;
+        this.image = image;
     }
 
     @JsonCreator
-    public JoinRoomEventBody(String body) {
+    public DrawEventBody(String body) {
         ObjectMapper mapper = new ObjectMapper();
-        JoinRoomEventBody bodyJson;
+        DrawEventBody bodyJson;
         try {
-            bodyJson = mapper.readValue(body, JoinRoomEventBody.class);
+            bodyJson = mapper.readValue(body, DrawEventBody.class);
             this.sender = bodyJson.sender;
-            this.roomId =  bodyJson.roomId;
+            this.image =  bodyJson.image;
         } catch (JsonMappingException e) {
             e.printStackTrace();
         } catch (JsonProcessingException e) {
             e.printStackTrace();
         }
     }
-
 
     public User getSender() {
         return this.sender;
@@ -52,19 +44,19 @@ public class JoinRoomEventBody extends BasicEventBody{
         this.sender = sender;
     }
 
-    public String getRoomId() {
-        return this.roomId;
+    public DrawnImage getImage() {
+        return this.image;
     }
 
-    public void setRoomId(String roomId) {
-        this.roomId = roomId;
+    public void setImage(DrawnImage image) {
+        this.image = image;
     }
 
     @Override
     public String toString() {
         return "{" +
             " sender='" + getSender() + "'" +
-            ", roomId='" + getRoomId() + "'" +
+            ", image='" + getImage() + "'" +
             "}";
     }
 }
