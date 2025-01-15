@@ -7,4 +7,8 @@ public class ClientEventNames {
 
     public static final String TIMER_ENDED = "timer_up";
 
+    public static final String MATCH_ENDED = "match_over";
+
+    public static final String TIMER_STARTED = "timer_started";
+
 }

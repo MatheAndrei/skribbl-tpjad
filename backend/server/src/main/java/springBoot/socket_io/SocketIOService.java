@@ -27,7 +27,9 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.*;
 
 import springBoot.socket_io.events.BasicEvent;
+import springBoot.socket_io.events.client.MatchEndedEvent;
 import springBoot.socket_io.events.client.TimerEndedEvent;
+import springBoot.socket_io.events.client.TimerStartedEvent;
 import springBoot.socket_io.events.client.UpdateAllEvent;
 import springBoot.socket_io.events.client.body.UpdateAllEventBody;
 import springBoot.socket_io.events.server.ChatMessageEvent;
@@ -203,14 +205,26 @@ public class SocketIOService implements IObservable{
 
     private DataListener onJoinRoom(){
         return (client, data, ackSender) -> {
-            User sender = ((JoinRoomEventBody)data).getSender();
+            String username = ((JoinRoomEventBody)data).getUsername();
             String roomId = ((JoinRoomEventBody)data).getRoomId();
-            boolean result = this.sessionService.joinRoom(sender, roomId);
-            System.out.println("User " + sender.getUsername()+ " just joined the room " + roomId+ " " + result);
-
-            Room room = this.sessionService.getClientRoom(sender);
-            client.joinRoom(room.getId());
-            this.sendEventToRoom(room.getId(), new UpdateAllEvent(new UpdateAllEventBody(room)));
+            User userSaved = this.sessionService.getUserByUsername(username);
+            boolean result = this.sessionService.joinRoom(userSaved, roomId);
+            System.out.println("User " + username + " joined the room " + roomId+ " ? " + result);
+            if (result) {
+                // Success response
+                Room room = this.sessionService.getClientRoom(userSaved);
+                client.joinRoom(room.getId());
+                this.sendEventToRoom(room.getId(), new UpdateAllEvent(new UpdateAllEventBody(room)));
+                if (ackSender != null) {
+                    ackSender.sendAckData("success");
+                }
+            } else {
+                // Failure response
+                if (ackSender != null) {
+                    ackSender.sendAckData("failure");
+                }
+            }
+            
         };
     }
 
@@ -263,13 +277,22 @@ public class SocketIOService implements IObservable{
         Room room;
         switch (event.getEventType()) {
             case ObserverEventTypes.MATCH_STARTED:
+            case ObserverEventTypes.NEW_SETTINGS:
                 roomId = (String)event.getBody();
                 room = this.sessionService.getRoomById(roomId);
                 this.sendEventToRoom(roomId, new UpdateAllEvent(new UpdateAllEventBody(room)));
                 break;
+            case ObserverEventTypes.TIMER_STARTED:
+                roomId = (String)event.getBody();
+                this.sendEventToRoom(roomId, new TimerStartedEvent());
+                break;
             case ObserverEventTypes.TIMER_ENDED:
                 roomId = (String)event.getBody();
                 this.sendEventToRoom(roomId, new TimerEndedEvent());
+                break;
+                case ObserverEventTypes.MATCH_ENDED:
+                roomId = (String)event.getBody();
+                this.sendEventToRoom(roomId, new MatchEndedEvent());
                 break;
             default:
                 break;

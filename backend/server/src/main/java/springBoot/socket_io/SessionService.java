@@ -155,6 +155,7 @@ public class SessionService implements IObserver{
         {
             room.setSettings(settings);
             this.startGame(room);
+            this.notifyObservers(new ObserverEvent(ObserverEventTypes.MATCH_STARTED, room.getId()));
             return true;
         }
         return false;
@@ -264,6 +265,7 @@ public class SessionService implements IObserver{
         /// TODO
         /// round start
         var room = this.getClientRoom(user);
+        this.notifyObservers(new ObserverEvent(ObserverEventTypes.TIMER_STARTED, room.getId()));
         room.setStatus(RoomStatus.InTurn);
         return true;
     }
@@ -302,6 +304,8 @@ public class SessionService implements IObserver{
     }
     private void timeUpForRoom(Room room){
         /// TODO round end
+        this.notifyObservers(new ObserverEvent(ObserverEventTypes.TIMER_ENDED, room.getId()));
+        /// TODO check if match end
         this.notifyObservers(new ObserverEvent(ObserverEventTypes.TIMER_ENDED, room.getId()));
     }
 }

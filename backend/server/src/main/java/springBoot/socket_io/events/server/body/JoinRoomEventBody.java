@@ -11,7 +11,7 @@ import springBoot.socket_io.events.BasicEventBody;
 
 public class JoinRoomEventBody extends BasicEventBody{
     @JsonProperty
-    private User sender;
+    private String username;
     @JsonProperty
     private String roomId;
 
@@ -23,8 +23,8 @@ public class JoinRoomEventBody extends BasicEventBody{
     //     this.sender = sender;
     //     this.roomId = roomId;
     // }
-    public JoinRoomEventBody(User sender, String roomId) {
-        this.sender = sender;
+    public JoinRoomEventBody(String username, String roomId) {
+        this.username = username;
         this.roomId = roomId;
     }
 
@@ -34,7 +34,7 @@ public class JoinRoomEventBody extends BasicEventBody{
         JoinRoomEventBody bodyJson;
         try {
             bodyJson = mapper.readValue(body, JoinRoomEventBody.class);
-            this.sender = bodyJson.sender;
+            this.username = bodyJson.username;
             this.roomId =  bodyJson.roomId;
         } catch (JsonMappingException e) {
             e.printStackTrace();
@@ -44,12 +44,12 @@ public class JoinRoomEventBody extends BasicEventBody{
     }
 
 
-    public User getSender() {
-        return this.sender;
+    public String getUsername() {
+        return this.username;
     }
 
-    public void setSender(User sender) {
-        this.sender = sender;
+    public void setUsername(String username) {
+        this.username = username;
     }
 
     public String getRoomId() {
@@ -63,7 +63,7 @@ public class JoinRoomEventBody extends BasicEventBody{
     @Override
     public String toString() {
         return "{" +
-            " sender='" + getSender() + "'" +
+            " username='" + getUsername() + "'" +
             ", roomId='" + getRoomId() + "'" +
             "}";
     }

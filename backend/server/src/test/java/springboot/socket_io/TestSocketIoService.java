@@ -27,17 +27,30 @@ import com.corundumstudio.socketio.SocketIOServer;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import domain.DrawnImage;
+import domain.Match;
+import domain.Message;
 import domain.Room;
 import domain.RoomSettings;
+import domain.Round;
+import domain.Turn;
 import domain.User;
 import domain.Word;
 import domain.enums.RoomStatus;
 import springBoot.socket_io.SessionService;
 import springBoot.socket_io.SocketIOConfiguration;
 import springBoot.socket_io.SocketIOService;
+import springBoot.socket_io.events.client.UpdateAllEvent;
+import springBoot.socket_io.events.client.body.UpdateAllEventBody;
+import springBoot.socket_io.events.server.ChatMessageEvent;
 import springBoot.socket_io.events.server.ChooseWordEvent;
+import springBoot.socket_io.events.server.DisconnectEvent;
+import springBoot.socket_io.events.server.DrawEvent;
 import springBoot.socket_io.events.server.JoinRoomEvent;
+import springBoot.socket_io.events.server.body.ChatMessageEventBody;
 import springBoot.socket_io.events.server.body.ChooseWordEventBody;
+import springBoot.socket_io.events.server.body.DisconnectEventBody;
+import springBoot.socket_io.events.server.body.DrawEventBody;
 import springBoot.socket_io.events.server.body.JoinRoomEventBody;
 import springBoot.socket_io.observer.ObserverEventTypes;
 import springboot.ObservableTest;
@@ -183,7 +196,7 @@ public class TestSocketIoService {
         client.connect(testUsername);
         Thread.sleep(1000); 
 
-        JoinRoomEvent event = new JoinRoomEvent(new JoinRoomEventBody(userH, room.getId()));
+        JoinRoomEvent event = new JoinRoomEvent(new JoinRoomEventBody(userH.getUsername(), room.getId()));
         String eventJson = "" ;
         try {
             eventJson = new ObjectMapper().writeValueAsString(event.getBody());
@@ -367,5 +380,23 @@ public class TestSocketIoService {
         assertEquals(room.getStatus(), RoomStatus.Started);
         assertEquals(orbTest.lastEvent.getEventType(), ObserverEventTypes.TIMER_ENDED);
         assertEquals((String)orbTest.lastEvent.getBody(), room.getId());
+
+        User user1 = new User("id1", "wee", false, true, true);
+        user1.setScore(78);
+        User user2 = new User("id2", "wernj", true, false, false);
+        user2.setScore(6743);
+        var turn1 = new Turn(user1, new Word(1L, "ceva"), new DrawnImage("ehgrghrhgrhh"));
+        var turn2 = new Turn(user2, null, null);
+        var roound = new Round(turn1, new ArrayList<>(){{add(turn1);add(turn2);}});
+        var match = new Match(roound, new ArrayList<>(){{add(new Message(user2,"ms1"));add(new Message(user2,"ms2"));}});
+        Room rooms = new Room(user1, new ArrayList<User>(){{add(user1);add(user2);}}, match, RoomStatus.InTurn, new RoomSettings(1,30,3));
+        rooms.setTimer(25);
+        try {
+            eventJson = new ObjectMapper().writeValueAsString(new UpdateAllEvent(new UpdateAllEventBody(rooms)));
+		} catch (JsonProcessingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+        System.out.println(eventJson);
     }
 }
