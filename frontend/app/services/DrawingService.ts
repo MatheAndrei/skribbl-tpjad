@@ -151,9 +151,6 @@ export class DrawingService {
 
         const pos = this.getMousePosition(event);
         this.selectedTool.onMouseDown(pos);
-
-        // send to server
-        gameService.sendImage(this.canvas.toDataURL());
     }
 
     onMouseUp(event: MouseEvent) {
@@ -166,9 +163,6 @@ export class DrawingService {
 
         const pos = this.getMousePosition(event);
         this.selectedTool.onMouseUp(pos);
-
-        // send to server
-        gameService.sendImage(this.canvas.toDataURL());
     }
 
     onMouseMove(event: MouseEvent) {
@@ -176,9 +170,6 @@ export class DrawingService {
 
         const pos = this.getMousePosition(event);
         this.selectedTool.onMouseMove(pos);
-
-        // send to server
-        gameService.sendImage(this.canvas.toDataURL());
     }
 
     private getMousePosition(event: MouseEvent): Vec2 {

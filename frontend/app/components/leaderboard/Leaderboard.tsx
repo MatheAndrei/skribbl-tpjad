@@ -8,7 +8,7 @@ const Leaderboard = observer(() => {
     const gameStore = gameService.gameStore;
     const players = [...gameStore.players];
 
-    players.sort((a, b) => a.score - b.score);
+    players.sort((a, b) => b.score - a.score);
 
     return (
         <Card className={"w-48"}>

@@ -10,12 +10,6 @@ const DEFAULT_WORDCOUNT = 3;
 
 export class GameStore {
 
-    // self
-    // host: User | null = null;
-    // players: User[] | null = null;
-    //
-    // guessWord: string
-
     roomCode: string;
     players: User[];
     messages: Message[];
@@ -25,9 +19,15 @@ export class GameStore {
     wordCount: number;
 
     guessWord: string;
+    previousGuessWord: string;
     words: Word[];
     currentRound: number;
+    drawtimeCounter: number;
     status: RoomStatus;
+    winner: string
+    revealWord: boolean;
+    revealWinner: boolean;
+
     drawing: boolean;
     hosting: boolean;
 
@@ -43,9 +43,15 @@ export class GameStore {
         this.wordCount = DEFAULT_WORDCOUNT;
 
         this.guessWord = "";
+        this.previousGuessWord = "";
         this.words = [];
         this.currentRound = 0;
+        this.drawtimeCounter = 0;
         this.status = RoomStatus.UNDEFINED;
+        this.winner = "";
+        this.revealWord = false;
+        this.revealWinner = false;
+
         this.drawing = false;
         this.hosting = false;
     }
@@ -79,6 +85,7 @@ export class GameStore {
     }
 
     setGuessWord(guessWord: string) {
+        this.previousGuessWord = this.guessWord;
         this.guessWord = guessWord;
     }
 
@@ -90,16 +97,28 @@ export class GameStore {
         this.currentRound = currentRound;
     }
 
+    setDrawtimeCounter(drawtimeCounter: number) {
+        this.drawtimeCounter = drawtimeCounter;
+    }
+
+    setWinner(winner: string) {
+        this.winner = winner;
+    }
+
+    setRevealWord(reveal: boolean) {
+        this.revealWord = reveal;
+    }
+
+    setRevealWinner(reveal: boolean) {
+        this.revealWinner = reveal;
+    }
+
     setDrawing(drawing: boolean) {
         this.drawing = drawing;
     }
 
     setHosting(hosting: boolean) {
         this.hosting = hosting;
-    }
-
-    addMessage(message: Message) {
-        this.messages.push(message);
     }
 
 }

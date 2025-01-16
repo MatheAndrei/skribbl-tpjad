@@ -2,12 +2,23 @@ import {type ChangeEvent} from "react";
 import {Select, SelectItem} from "@nextui-org/react";
 import {observer} from "mobx-react-lite";
 import {gameService} from "~/services/GameService";
+import RoomStatus from "~/domain/RoomStatus";
 
 const allRounds = [2, 3, 4, 5, 6, 7, 8, 9, 10];
 const allDrawtime = [15, 20, 30, 40, 50, 60, 70, 80, 90, 100, 120, 150, 180, 210, 240];
 const allWordCount = [1, 2, 3, 4, 5];
 
 const GameSettings = observer(() => {
+
+    const gameStore = gameService.gameStore;
+
+    const isActive = (): boolean => {
+        if (!gameStore.hosting) return false;
+
+        if (gameStore.revealWord || gameStore.revealWinner) return false;
+
+        return gameStore.status === RoomStatus.WAITING;
+    };
 
     const onRoundsChange = (event: ChangeEvent<HTMLSelectElement>) => {
         const value = event.target.value;
@@ -34,7 +45,12 @@ const GameSettings = observer(() => {
     };
 
     return (
-        <div className={"h-full grid grid-cols-2 justify-between content-start items-center gap-4 overflow-y-auto"}>
+        <div
+            className={"h-full grid grid-cols-2 justify-between content-start items-center gap-4 overflow-y-auto"}
+            style={{
+                display: isActive() ? "grid" : "none",
+            }}
+        >
             <p>Rounds</p>
             <Select
                 aria-label={"rounds"}

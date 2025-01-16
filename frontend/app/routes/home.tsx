@@ -74,7 +74,10 @@ function Home() {
         gameService
             .join(data.username, data.room)
             .then(() => navigate("/game"))
-            .catch((error) => console.log(error));
+            .catch((error) => {
+                console.log(error);
+                setFailure(true);
+            });
     };
 
     return (

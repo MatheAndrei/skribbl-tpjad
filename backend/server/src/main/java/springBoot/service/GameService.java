@@ -160,6 +160,9 @@ public class GameService implements IObserver{
     public boolean joinRoom(User user, String roomId){
         if (user == null || user.getId() == null) return false;
         Room room = this.getRoomById(roomId);
+        if (room.getId() == null) {
+            return false;
+        }
         if(room.getHost().getUsername().equals(user.getUsername())){
             room.setStatus(RoomStatus.Waiting);
             var host = this.getUserByUsername(user.getUsername());

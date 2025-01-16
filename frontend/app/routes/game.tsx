@@ -1,11 +1,12 @@
-import type { Route } from "./+types/home";
+import type {Route} from "./+types/home";
+import {useNavigate} from "react-router";
+import {observer} from "mobx-react-lite";
+import {gameService} from "~/services/GameService";
 import Header from "~/components/header/Header";
 import Leaderboard from "~/components/leaderboard/Leaderboard";
 import Chat from "~/components/chat/Chat";
 import Footer from "~/components/footer/Footer";
 import Body from "~/components/body/Body";
-import {useNavigate} from "react-router";
-import {gameService} from "~/services/GameService";
 
 export function meta({}: Route.MetaArgs) {
     return [
@@ -13,8 +14,12 @@ export function meta({}: Route.MetaArgs) {
     ];
 }
 
-function Game() {
+const Game = observer(() => {
     const navigate = useNavigate();
+
+    if (gameService.gameStore === null) {
+        navigate("/", {replace: true});
+    }
 
     return (
         <div
@@ -46,6 +51,6 @@ function Game() {
             </div>
         </div>
     );
-}
+});
 
 export default Game;

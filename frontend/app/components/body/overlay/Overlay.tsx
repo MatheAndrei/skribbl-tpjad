@@ -5,32 +5,30 @@ import RoomStatus from "~/domain/RoomStatus";
 import GameSettings from "~/components/body/overlay/GameSettings";
 import Waiting from "~/components/body/overlay/Waiting";
 import WordSelector from "~/components/body/overlay/WordSelector";
+import WordReveal from "~/components/body/overlay/WordReveal";
+import WinnerReveal from "~/components/body/overlay/WinnerReveal";
 
 const Overlay = observer(() => {
 
     const gameStore = gameService.gameStore;
 
+    const isActive = (): boolean => {
+        return gameStore.status !== RoomStatus.IN_TURN;
+    };
+
     return (
         <div
             className={"absolute inset-0 p-4 bg-background bg-opacity-75 rounded-large "}
             style={{
-                display: gameStore.status !== RoomStatus.IN_TURN ? "block" : "none",
+                display: isActive() ? "block" : "none",
                 aspectRatio: DrawingService.CANVAS_ASPECT_RATIO
             }}
         >
-            {gameStore.status === RoomStatus.WAITING && gameStore.hosting && (
-                <GameSettings/>
-            )}
-            {
-                ((gameStore.status === RoomStatus.WAITING && !gameStore.hosting) ||
-                (gameStore.status === RoomStatus.STARTED && !gameStore.drawing)) &&
-                (
-                    <Waiting/>
-                )
-            }
-            {gameStore.status === RoomStatus.STARTED && gameStore.drawing && gameStore.words.length > 0 && (
-                <WordSelector/>
-            )}
+            <Waiting/>
+            <GameSettings/>
+            <WordSelector/>
+            <WordReveal/>
+            <WinnerReveal/>
         </div>
     );
 });

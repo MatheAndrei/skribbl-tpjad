@@ -1,5 +1,6 @@
 import Tool from "~/services/tools/Tool";
 import type Vec2 from "~/domain/Vec2";
+import {gameService} from "~/services/GameService";
 
 class Brush extends Tool {
     private isDrawing: boolean = false;
@@ -75,6 +76,8 @@ class Brush extends Tool {
         this.isDrawing = true;
         this.lastPos = pos;
 
+        // send to server
+        gameService.sendImage(this.canvas.toDataURL());
     }
 
     onMouseUp(pos: Vec2) {
@@ -91,6 +94,9 @@ class Brush extends Tool {
         this.ctx.putImageData(this.imageData, 0, 0);
 
         this.lastPos = pos;
+
+        // send to server
+        gameService.sendImage(this.canvas.toDataURL());
     }
 
 }

@@ -1,5 +1,6 @@
 import Tool from "~/services/tools/Tool";
 import type Vec2 from "~/domain/Vec2";
+import {gameService} from "~/services/GameService";
 
 class Bucket extends Tool {
     constructor(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D) {
@@ -64,6 +65,9 @@ class Bucket extends Tool {
 
     onMouseDown(pos: Vec2) {
         this.floodFill(pos, this.ctx.fillStyle as string);
+
+        // send to server
+        gameService.sendImage(this.canvas.toDataURL());
     }
 
     onMouseUp(pos: Vec2) {}

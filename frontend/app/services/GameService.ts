@@ -12,11 +12,13 @@ export class GameService {
 
     private socket: Socket | null;
 
-    roomId: string | null;
     me: User;
+    roomId: string | null;
     status: RoomStatus;
+    image: string;
 
     gameStore: GameStore;
+    drawtimeInterval: NodeJS.Timeout | null;
 
     constructor() {
         this.socket = null;
@@ -31,8 +33,10 @@ export class GameService {
             score: 0,
         }
         this.status = RoomStatus.UNDEFINED;
+        this.image = "";
 
         this.gameStore = new GameStore();
+        this.drawtimeInterval = null;
 
         axios.defaults.baseURL = API_URL;
     }
@@ -41,6 +45,7 @@ export class GameService {
         if (!this.socket) return;
 
         this.socket.on("connect", () => this.onConnect());
+        this.socket.on("disconnect", () => this.onDisconnect());
         this.socket.on("update_all", (data) => this.onUpdateAll(data));
         this.socket.on("timer_started", () => this.onTimerStarted());
         this.socket.on("timer_up", () => this.onTimerUp());
@@ -55,19 +60,27 @@ export class GameService {
         this.me.id = this.socket.id!;
     }
 
+    private onDisconnect() {
+        this.gameStore = new GameStore();
+    }
+
     private onUpdateAll(data: string) {
         console.log("Update All");
 
+        // get room
         const room: Room = JSON.parse(data)["room"];
         console.log(room);
 
+        // get room id
         this.roomId = room.id;
         this.gameStore.setRoomCode(room.id);
 
+        // get status
         if (room.status !== this.gameStore.status) {
             this.gameStore.setStatus(room.status);
         }
 
+        // get players & me
         this.gameStore.setPlayers(room.players);
         for (const player of room.players) {
             if (player.id === this.me.id) {
@@ -80,27 +93,44 @@ export class GameService {
         }
 
         // get chat
-        this.gameStore.setMessages(room.match?.chat ?? []);
+        if ((room.match?.chat ?? []) !== this.gameStore.messages) {
+            this.gameStore.setMessages(room.match?.chat ?? []);
+        }
 
         // get word
-        this.gameStore.setGuessWord(room.match?.currentRound.currentTurn?.currentWord?.word ?? "");
+        if ((room.match?.currentRound.currentTurn?.currentWord?.word ?? "") !== this.gameStore.guessWord) {
+            this.gameStore.setGuessWord(room.match?.currentRound.currentTurn?.currentWord?.word ?? "");
+        }
 
         // load image
         if (room.match?.currentRound.currentTurn?.image && !this.me.isDrawer) {
-            drawingService.loadImage(room.match.currentRound.currentTurn.image.image);
+            if (this.image !== room.match.currentRound.currentTurn.image.image) {
+                this.image = room.match.currentRound.currentTurn.image.image;
+                drawingService.loadImage(room.match.currentRound.currentTurn.image.image);
+            }
         }
 
         // get settings
         if (room.settings) {
-            this.gameStore.setRounds(room.settings.numRounds);
-            this.gameStore.setDrawtime(room.settings.timePerTurn);
-            this.gameStore.setWordCount(room.settings.wordCount);
+            if (room.settings.numRounds !== this.gameStore.rounds) {
+                this.gameStore.setRounds(room.settings.numRounds);
+            }
+            if (room.settings.timePerTurn !== this.gameStore.drawtime) {
+                this.gameStore.setDrawtime(room.settings.timePerTurn);
+            }
+            if (room.settings.wordCount !== this.gameStore.wordCount) {
+                this.gameStore.setWordCount(room.settings.wordCount);
+            }
         }
 
         // get current round
-        if (room.match?.currentRound) {
-            this.gameStore.setCurrentRound(room.match.currentRoundNum);
+        if ((room.match?.currentRoundNum ?? 0) !== this.gameStore.currentRound) {
+            this.gameStore.setCurrentRound(room.match?.currentRoundNum ?? 0);
         }
+
+
+        // ### FLOW ###
+
 
         // show words
         if (room.status === RoomStatus.STARTED && this.me.isDrawer) {
@@ -116,15 +146,48 @@ export class GameService {
 
     private onTimerStarted() {
         console.log("Timers started");
+
+        // init timer
+        this.gameStore.drawtimeCounter = this.gameStore.drawtime;
+
+        // start timer
+        this.drawtimeInterval = setInterval(() => {
+            this.gameStore.setDrawtimeCounter(this.gameStore.drawtimeCounter - 1);
+            if (this.gameStore.drawtimeCounter === 0) {
+                if (this.drawtimeInterval !== null) {
+                    clearInterval(this.drawtimeInterval);
+                }
+            }
+        }, 1000);
     }
 
     private onTimerUp() {
         console.log("Timers up");
+
+        if (this.drawtimeInterval !== null) {
+            clearInterval(this.drawtimeInterval);
+        }
+
+        this.gameStore.setRevealWord(true);
+        setTimeout(() => {
+            this.gameStore.setRevealWord(false);
+        }, 2500);
     }
 
     private onMatchOver() {
         console.log("Match over");
-        this.gameStore.setStatus(RoomStatus.WAITING);
+
+        if (this.gameStore.players.length === 0) return;
+
+        const sortedPlayer = this.gameStore.players.slice().sort((a, b) => b.score - a.score);
+        const winner = sortedPlayer[0].username;
+
+        this.gameStore.setWinner(winner);
+        this.gameStore.setRevealWinner(true);
+        setTimeout(() => {
+            this.gameStore.setRevealWinner(false);
+            this.gameStore.setStatus(RoomStatus.WAITING);
+        }, 6000);
     }
 
 

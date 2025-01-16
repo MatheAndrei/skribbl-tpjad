@@ -18,9 +18,11 @@ const Footer = observer(() => {
             {gameStore.status === RoomStatus.WAITING && gameStore.hosting && (
                 <div className={"grid place-content-center"}>
                     <Button
+                        isDisabled={gameStore.players.length < 2}
+                        disableRipple
                         color={"success"}
                         size={"lg"}
-                        className={"px-12"}
+                        className={"px-12 data-[hover=true]:opacity-100 data-[disabled=true]"}
                         onPress={onStart}
                     >
                         Start
