@@ -1,6 +1,5 @@
 import Tool from "~/services/tools/Tool";
 import type Vec2 from "~/domain/Vec2";
-import {gameService} from "~/services/GameService";
 
 class Bucket extends Tool {
     constructor(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D) {
@@ -63,16 +62,19 @@ class Bucket extends Tool {
         this.ctx.putImageData(this.imageData, 0, 0);
     }
 
-    onMouseDown(pos: Vec2) {
+    onMouseDown(pos: Vec2): boolean {
         this.floodFill(pos, this.ctx.fillStyle as string);
 
-        // send to server
-        gameService.sendImage(this.canvas.toDataURL());
+        return true;
     }
 
-    onMouseUp(pos: Vec2) {}
+    onMouseUp(pos: Vec2): boolean {
+        return false;
+    }
 
-    onMouseMove(pos: Vec2) {}
+    onMouseMove(pos: Vec2): boolean {
+        return false;
+    }
 
 }
 

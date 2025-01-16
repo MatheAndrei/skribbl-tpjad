@@ -45,9 +45,9 @@ abstract class Tool {
         data[pos.y * this.canvas.width + pos.x] = color;
     }
 
-    abstract onMouseDown(pos: Vec2): void;
-    abstract onMouseUp(pos: Vec2): void;
-    abstract onMouseMove(pos: Vec2): void;
+    abstract onMouseDown(pos: Vec2): boolean;
+    abstract onMouseUp(pos: Vec2): boolean;
+    abstract onMouseMove(pos: Vec2): boolean;
 
 }
 

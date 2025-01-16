@@ -1,6 +1,5 @@
 import Tool from "~/services/tools/Tool";
 import type Vec2 from "~/domain/Vec2";
-import {gameService} from "~/services/GameService";
 
 class Brush extends Tool {
     private isDrawing: boolean = false;
@@ -66,7 +65,7 @@ class Brush extends Tool {
         }
     }
 
-    onMouseDown(pos: Vec2) {
+    onMouseDown(pos: Vec2): boolean {
         const data = new Uint32Array(this.imageData.data.buffer);
         const color = this.hexToRGBA(this.ctx.strokeStyle as string);
 
@@ -76,16 +75,17 @@ class Brush extends Tool {
         this.isDrawing = true;
         this.lastPos = pos;
 
-        // send to server
-        gameService.sendImage(this.canvas.toDataURL());
+        return true;
     }
 
-    onMouseUp(pos: Vec2) {
+    onMouseUp(pos: Vec2): boolean {
         this.isDrawing = false;
+
+        return true;
     }
 
-    onMouseMove(pos: Vec2) {
-        if (!this.isDrawing) return;
+    onMouseMove(pos: Vec2): boolean {
+        if (!this.isDrawing) return false;
 
         const data = new Uint32Array(this.imageData.data.buffer);
         const color = this.hexToRGBA(this.ctx.strokeStyle as string);
@@ -95,8 +95,7 @@ class Brush extends Tool {
 
         this.lastPos = pos;
 
-        // send to server
-        gameService.sendImage(this.canvas.toDataURL());
+        return true;
     }
 
 }

@@ -311,7 +311,7 @@ public class GameService implements IObserver{
                         System.out.println("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
                         if (room.getTimer() <= 0) {
                             this.timeUpForRoom(room);
-                            room.setStatus(RoomStatus.Started);
+//                            room.setStatus(RoomStatus.Started);
                             System.out.println("a");
                         }
                         System.out.println("b");
@@ -350,10 +350,12 @@ public class GameService implements IObserver{
         if(room.getMatch().getCurrentRound().getCurrentTurn() == null){
             if(room.getMatch().getCurrentRoundNum()>=room.getSettings().getNumRounds()-1){
                 this.notifyObservers(new ObserverEvent(ObserverEventTypes.MATCH_ENDED, room.getId()));
+                room.setStatus(RoomStatus.Waiting);
             }else{
                 Round round = createNewRound(room);
                 room.getMatch().setCurrentRound(round);
                 room.getMatch().incrementCurrentRoundNum();
+                room.setStatus(RoomStatus.Started);
             }
         }
         if(room.getMatch().getCurrentRound().getCurrentTurn() != null){
@@ -365,6 +367,8 @@ public class GameService implements IObserver{
                     player.setIsDrawer(false);
                 }
             }
+            room.setStatus(RoomStatus.Started);
         }
+        this.notifyObservers(new ObserverEvent(ObserverEventTypes.MATCH_STARTED, room.getId()));
     }
 }

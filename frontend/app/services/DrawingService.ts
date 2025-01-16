@@ -69,6 +69,13 @@ export class DrawingService {
         this.ctx.fillStyle = oldColor;
 
         // send to server
+        // gameService.sendImage(JSON.stringify({
+        //     tool: this.drawingStore.tool,
+        //     action: "clear",
+        //     size: this.ctx.lineWidth,
+        //     color: this.ctx.strokeStyle,
+        //     pos: null,
+        // }));
         gameService.sendImage(this.canvas.toDataURL());
     }
 
@@ -142,7 +149,7 @@ export class DrawingService {
     }
 
     onMouseDown(event: MouseEvent) {
-        if (!this.canvas || !this.selectedTool) return;
+        if (!this.canvas || !this.ctx || !this.selectedTool) return;
 
         // skip if left click wasn't pressed
         if (event.button !== 0) {
@@ -150,11 +157,21 @@ export class DrawingService {
         }
 
         const pos = this.getMousePosition(event);
-        this.selectedTool.onMouseDown(pos);
+        if (this.selectedTool.onMouseDown(pos)) {
+            // send to server
+            // gameService.sendImage(JSON.stringify({
+            //     tool: this.drawingStore.tool,
+            //     action: "down",
+            //     size: this.ctx.lineWidth,
+            //     color: this.ctx.strokeStyle,
+            //     pos: pos,
+            // }));
+            gameService.sendImage(this.canvas.toDataURL());
+        }
     }
 
     onMouseUp(event: MouseEvent) {
-        if (!this.canvas || !this.selectedTool) return;
+        if (!this.canvas || !this.ctx || !this.selectedTool) return;
 
         // skip if left click wasn't released
         if (event.button !== 0) {
@@ -162,14 +179,34 @@ export class DrawingService {
         }
 
         const pos = this.getMousePosition(event);
-        this.selectedTool.onMouseUp(pos);
+        if (this.selectedTool.onMouseUp(pos)) {
+            // send to server
+            // gameService.sendImage(JSON.stringify({
+            //     tool: this.drawingStore.tool,
+            //     action: "up",
+            //     size: this.ctx.lineWidth,
+            //     color: this.ctx.strokeStyle,
+            //     pos: pos,
+            // }));
+            gameService.sendImage(this.canvas.toDataURL());
+        }
     }
 
     onMouseMove(event: MouseEvent) {
-        if (!this.canvas || !this.canvas || !this.selectedTool) return;
+        if (!this.canvas || !this.ctx || !this.selectedTool) return;
 
         const pos = this.getMousePosition(event);
-        this.selectedTool.onMouseMove(pos);
+        if (this.selectedTool.onMouseMove(pos)) {
+            // send to server
+            // gameService.sendImage(JSON.stringify({
+            //     tool: this.drawingStore.tool,
+            //     action: "move",
+            //     size: this.ctx.lineWidth,
+            //     color: this.ctx.strokeStyle,
+            //     pos: pos,
+            // }));
+            gameService.sendImage(this.canvas.toDataURL());
+        }
     }
 
     private getMousePosition(event: MouseEvent): Vec2 {

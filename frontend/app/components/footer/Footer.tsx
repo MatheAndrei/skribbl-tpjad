@@ -15,7 +15,7 @@ const Footer = observer(() => {
 
     return (
         <>
-            {gameStore.status === RoomStatus.WAITING && gameStore.hosting && (
+            {gameStore.status === RoomStatus.WAITING && gameStore.hosting && !gameStore.revealWord && !gameStore.revealWinner && (
                 <div className={"grid place-content-center"}>
                     <Button
                         isDisabled={gameStore.players.length < 2}

@@ -1,7 +1,4 @@
 import type {Route} from "./+types/home";
-import {useNavigate} from "react-router";
-import {observer} from "mobx-react-lite";
-import {gameService} from "~/services/GameService";
 import Header from "~/components/header/Header";
 import Leaderboard from "~/components/leaderboard/Leaderboard";
 import Chat from "~/components/chat/Chat";
@@ -14,13 +11,7 @@ export function meta({}: Route.MetaArgs) {
     ];
 }
 
-const Game = observer(() => {
-    const navigate = useNavigate();
-
-    if (gameService.gameStore === null) {
-        navigate("/", {replace: true});
-    }
-
+const Game = () => {
     return (
         <div
             className={"w-full max-h-screen mx-4 grid justify-between content-center gap-2"}
@@ -51,6 +42,6 @@ const Game = observer(() => {
             </div>
         </div>
     );
-});
+};
 
 export default Game;

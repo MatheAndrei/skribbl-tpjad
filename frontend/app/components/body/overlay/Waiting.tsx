@@ -8,10 +8,11 @@ const Waiting = observer(() => {
 
     const isActive= (): boolean => {
         return (
-            (gameStore.status !== RoomStatus.WAITING && !gameStore.hosting) &&
-            (gameStore.status === RoomStatus.STARTED && !gameStore.drawing) &&
-            (!gameStore.revealWord) &&
-            (!gameStore.revealWinner)
+            !(gameStore.status === RoomStatus.WAITING && gameStore.hosting) &&
+            !(gameStore.status === RoomStatus.STARTED && gameStore.drawing) &&
+            !(gameStore.status === RoomStatus.IN_TURN) &&
+            !(gameStore.revealWord) &&
+            !(gameStore.revealWinner)
         );
     };
 

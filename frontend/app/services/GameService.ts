@@ -7,6 +7,7 @@ import RoomStatus from "~/domain/RoomStatus";
 import type User from "~/domain/User";
 import type Word from "~/domain/Word";
 import {drawingService} from "~/services/DrawingService";
+import type ToolEnum from "~/services/tools/ToolEnum";
 
 export class GameService {
 
@@ -16,6 +17,7 @@ export class GameService {
     roomId: string | null;
     status: RoomStatus;
     image: string;
+    tool: ToolEnum | null;
 
     gameStore: GameStore;
     drawtimeInterval: NodeJS.Timeout | null;
@@ -34,6 +36,7 @@ export class GameService {
         }
         this.status = RoomStatus.UNDEFINED;
         this.image = "";
+        this.tool = null;
 
         this.gameStore = new GameStore();
         this.drawtimeInterval = null;
@@ -61,7 +64,7 @@ export class GameService {
     }
 
     private onDisconnect() {
-        this.gameStore = new GameStore();
+        console.log("Disconnected");
     }
 
     private onUpdateAll(data: string) {
@@ -104,10 +107,37 @@ export class GameService {
 
         // load image
         if (room.match?.currentRound.currentTurn?.image && !this.me.isDrawer) {
-            if (this.image !== room.match.currentRound.currentTurn.image.image) {
-                this.image = room.match.currentRound.currentTurn.image.image;
-                drawingService.loadImage(room.match.currentRound.currentTurn.image.image);
-            }
+            drawingService.loadImage(room.match?.currentRound.currentTurn?.image.image);
+
+            // const image: {
+            //     tool: ToolEnum,
+            //     action: string,
+            //     size: number,
+            //     color: string,
+            //     pos: Vec2 | null,
+            // } = JSON.parse(room.match?.currentRound.currentTurn?.image.image);
+            //
+            // drawingService.setSize(image.size);
+            // drawingService.setColor(image.color);
+            // if (image.tool !== this.tool) {
+            //     this.tool = image.tool;
+            //     drawingService.setTool(image.tool);
+            // }
+            //
+            // switch (image.action) {
+            //     case "clear":
+            //         drawingService.clearCanvas();
+            //         break;
+            //     case "down":
+            //         drawingService.selectedTool?.onMouseDown(image.pos!);
+            //         break;
+            //     case "up":
+            //         drawingService.selectedTool?.onMouseUp(image.pos!);
+            //         break;
+            //     case "move":
+            //         drawingService.selectedTool?.onMouseMove(image.pos!);
+            //         break;
+            // }
         }
 
         // get settings
@@ -166,6 +196,7 @@ export class GameService {
 
         if (this.drawtimeInterval !== null) {
             clearInterval(this.drawtimeInterval);
+            this.gameStore.setDrawtimeCounter(0);
         }
 
         this.gameStore.setRevealWord(true);
@@ -216,6 +247,7 @@ export class GameService {
         this.registerEvents();
 
         // join room
+        gameService.gameStore = new GameStore();
         const response = await this.socket.emitWithAck("join_room", {
             username: username,
             roomId: room,
@@ -233,7 +265,7 @@ export class GameService {
     async leave() {
         if (!this.socket) return;
 
-        this.socket.close();
+        this.socket.disconnect();
     }
 
     start() {
@@ -287,6 +319,8 @@ export class GameService {
 
     sendImage(image: string) {
         if (!this.socket) return;
+
+        if (!this.me.isDrawer) return;
 
         this.socket.emit("draw", {
             "sender": {
