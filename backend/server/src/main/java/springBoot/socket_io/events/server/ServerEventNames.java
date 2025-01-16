@@ -1,7 +1,7 @@
 package springBoot.socket_io.events.server;
 
 public class ServerEventNames {
-    public static final String DISCONNECT = "disconnect";
+    public static final String DISCONNECT = "leave";
 
     public static final String CHAT_MESSAGE = "message";
 

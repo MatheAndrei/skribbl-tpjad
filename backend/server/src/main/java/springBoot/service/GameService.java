@@ -54,13 +54,20 @@ public class GameService implements IObserver{
     }
 
     public User createUser(String username){
-        User user =  new User();
-        user.setUsername(username);
-        user.setIsDrawer(null);
-        user.setIsHost(null);
-        user.setHasGuessed(null);
-        users.put(username, user);
-        return user;
+//        if (users.keySet().isEmpty() || !users.containsKey(username)) {
+            User user = new User();
+            user.setUsername(username);
+            user.setIsDrawer(null);
+            user.setIsHost(null);
+            user.setHasGuessed(null);
+            this.saveUser(user);
+            return user;
+//        }
+//        return null;
+    }
+
+    public void saveUser(User user){
+        users.put(user.getUsername(), user);
     }
 
     public User getUserByUsername(String username){
@@ -110,6 +117,18 @@ public class GameService implements IObserver{
             room.getPlayers().get(0).setIsHost(true);
             room.setHost(room.getPlayers().get(0));
         }
+        if (room.getMatch() != null){
+            /// remove turns with the removed user
+            List<Turn> turnsToRemove = new ArrayList<>();
+            for(var turn: room.getMatch().getCurrentRound().getTurns()){
+                if (turn.getDrawerUser().equals(user)) {
+                    turnsToRemove.add(turn);
+                }
+            }
+            for(var t : turnsToRemove){
+                room.getMatch().getCurrentRound().getTurns().remove(t);
+            }
+        }
         return isDeleted;
     }
 
@@ -119,8 +138,11 @@ public class GameService implements IObserver{
 
     public Room hostRoom(String username){
         User userH = this.createUser(username);
-        Room room = this.createRoom(userH);
-        return room;
+        if (userH != null){
+            Room room = this.createRoom(userH);
+            return room;
+        }
+        return new Room();
     }
 
     public boolean addRoomSettings(String roomId, RoomSettings settings){
@@ -136,17 +158,19 @@ public class GameService implements IObserver{
     }
 
     public boolean joinRoom(User user, String roomId){
-        if (user.getId() == null) return false;
+        if (user == null || user.getId() == null) return false;
         Room room = this.getRoomById(roomId);
         if(room.getHost().getUsername().equals(user.getUsername())){
             room.setStatus(RoomStatus.Waiting);
             var host = this.getUserByUsername(user.getUsername());
             host.setIsHost(true);
+            this.saveUser(host);
             room.setHost(host); /// for id update and status
         }
         else{
             var nonHost = this.getUserByUsername(user.getUsername());
             nonHost.setIsHost(false);
+            this.saveUser(nonHost);
         }
         return room.getPlayers().add(user);
     }
@@ -182,6 +206,15 @@ public class GameService implements IObserver{
         Round round = createNewRound(room);
         Match match = new Match(round, new ArrayList<>());
         room.setMatch(match);
+        for( var player: room.getPlayers()){
+            if (room.getMatch().getCurrentRound().getCurrentTurn().getDrawerUser().equals(player)){
+                player.setIsDrawer(true);
+            }
+            else{
+                player.setIsDrawer(false);
+            }
+        }
+        room.setStatus(RoomStatus.Started);
         return true;
     }
 
@@ -202,11 +235,13 @@ public class GameService implements IObserver{
         checkMessageIsWord(message, chosenWord);
         if(checkMessageIsWord(message,chosenWord)){
             userRoom.getMatch().getChat().add(new Message(user, "User "+ user.getUsername()+" guessed the word"));
-            user.setHasGuessed(true);
+            User userSaved = this.getUserByUsername(user.getUsername());
+            userSaved.setHasGuessed(true);
             if(!correctUsers.containsKey(userRoom.getId())){
                 correctUsers.put(userRoom.getId(), new ArrayList<>());
             }
-            correctUsers.get(userRoom.getId()).add(user);
+            if (!correctUsers.get(userRoom.getId()).contains(userSaved))
+                correctUsers.get(userRoom.getId()).add(userSaved);
             if(correctUsers.get(userRoom.getId()).size()== userRoom.getPlayers().size()-1){
                 userRoom.setStatus(RoomStatus.Started);
                 this.timeUpForRoom(userRoom);
@@ -239,7 +274,9 @@ public class GameService implements IObserver{
 
     public boolean updateDrawnImage(User user, DrawnImage image){
         Room room = getUserRoom(user);
-        room.getMatch().getCurrentRound().getCurrentTurn().setImage(image);
+        if (room.getMatch() != null && room.getMatch().getCurrentRound() != null && room.getMatch().getCurrentRound().getCurrentTurn() != null) {
+            room.getMatch().getCurrentRound().getCurrentTurn().setImage(image);
+        }
         return true;
     }
 
@@ -268,10 +305,13 @@ public class GameService implements IObserver{
                 for (Room room : rooms) {
                     if(room.getStatus() == RoomStatus.InTurn){
                         room.decrementTimer();
+                        System.out.println("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
                         if (room.getTimer() <= 0) {
                             this.timeUpForRoom(room);
                             room.setStatus(RoomStatus.Started);
+                            System.out.println("a");
                         }
+                        System.out.println("b");
                     }
                 }
             }
@@ -279,18 +319,30 @@ public class GameService implements IObserver{
     }
 
     public void calculateScores(User userDrawer,List<User> correctUsersPerRoom){
-        for(User user: correctUsersPerRoom){
-            user.setScore(user.getScore()+scoreTurn-correctUsersPerRoom.indexOf(user)*50);
+        System.out.println("PISATU:");
+        System.out.println(correctUsersPerRoom);
+        if (correctUsersPerRoom != null) {
+            for(User user: correctUsersPerRoom){
+                System.out.println(user);
+                user.setScore(user.getScore()+scoreTurn-correctUsersPerRoom.indexOf(user) * 50);
+            }
+            if (userDrawer != null){
+                System.out.println("!!!!!!!   PULAAAA   !!!!!!!");
+                userDrawer.setScore(userDrawer.getScore() + 50 * correctUsersPerRoom.size());
+            }
+
+            correctUsersPerRoom.clear();
         }
-        userDrawer.setScore(userDrawer.getScore()+50*correctUsersPerRoom.size());
-        correctUsersPerRoom.clear();
     }
 
 
 
     private void timeUpForRoom(Room room){
+        System.out.println("1");
         calculateScores(room.getMatch().getCurrentRound().getCurrentTurn().getDrawerUser(), correctUsers.get(room.getId()));
+        System.out.println("2");
         this.notifyObservers(new ObserverEvent(ObserverEventTypes.TIMER_ENDED, room.getId()));
+        System.out.println("3");
         room.getMatch().getCurrentRound().nextTurn();
         if(room.getMatch().getCurrentRound().getCurrentTurn() == null){
             if(room.getMatch().getCurrentRoundNum()>=room.getSettings().getNumRounds()-1){
@@ -301,7 +353,15 @@ public class GameService implements IObserver{
                 room.getMatch().incrementCurrentRoundNum();
             }
         }
-        /// TODO check if match end
-        this.notifyObservers(new ObserverEvent(ObserverEventTypes.TIMER_ENDED, room.getId()));
+        if(room.getMatch().getCurrentRound().getCurrentTurn() != null){
+            for( var player: room.getPlayers()){
+                if (room.getMatch().getCurrentRound().getCurrentTurn().getDrawerUser().equals(player)){
+                    player.setIsDrawer(true);
+                }
+                else{
+                    player.setIsDrawer(false);
+                }
+            }
+        }
     }
 }

@@ -10,6 +10,12 @@ export default {
         extend: {
             fontFamily: {
                 sans: ["Pangolin", "ui-sans-serif", "system-ui", "sans-serif", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"],
+            },
+            keyframes: {
+                wiggle: {
+                    "0%, 100%": { transform: "rotate(-4deg)" },
+                    "50%": { transform: "rotate(4deg)" },
+                }
             }
         },
     },

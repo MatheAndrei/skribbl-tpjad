@@ -1,0 +1,3 @@
+- enable chat only while drawing (in turn)
+- check for connection errors (host / join)
+- add overlay: waiting for host to start

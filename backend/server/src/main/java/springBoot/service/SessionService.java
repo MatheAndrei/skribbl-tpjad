@@ -57,7 +57,8 @@ public class SessionService implements IObserver, IObservable{
 
     public User createUser(String username){
         User user =  serviceGame.createUser(username);
-        pendingUsers.add(user);
+        if (user != null)
+            pendingUsers.add(user);
         return user;
     }
 

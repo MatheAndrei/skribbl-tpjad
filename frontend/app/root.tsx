@@ -13,6 +13,8 @@ import type {NavigateOptions} from "react-router";
 import {NextUIProvider} from "@nextui-org/react";
 import stylesheet from "./app.css?url";
 import {configure} from "mobx";
+import axios from "axios";
+import {API_URL} from "~/constants";
 
 
 // linting options for MobX

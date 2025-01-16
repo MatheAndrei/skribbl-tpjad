@@ -8,6 +8,7 @@ import springBoot.service.WordService;
 import java.util.List;
 
 @RestController
+@CrossOrigin(origins = "*")
 public class WordController {
     @Autowired private WordService wordService;
 

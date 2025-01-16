@@ -1,10 +1,11 @@
 import type { Route } from "./+types/home";
-import TopBar from "~/components/TopBar";
-import Canvas from "~/components/Canvas";
-import Leaderboard from "~/components/Leaderboard";
-import Chat from "~/components/Chat";
-import ToolBar from "~/components/ToolBar";
-import ColorBar from "~/components/ColorBar";
+import Header from "~/components/header/Header";
+import Leaderboard from "~/components/leaderboard/Leaderboard";
+import Chat from "~/components/chat/Chat";
+import Footer from "~/components/footer/Footer";
+import Body from "~/components/body/Body";
+import {useNavigate} from "react-router";
+import {gameService} from "~/services/GameService";
 
 export function meta({}: Route.MetaArgs) {
     return [
@@ -13,38 +14,35 @@ export function meta({}: Route.MetaArgs) {
 }
 
 function Game() {
+    const navigate = useNavigate();
+
     return (
         <div
-            className={"w-full mx-4 grid justify-between content-center gap-4"}
+            className={"w-full max-h-screen mx-4 grid justify-between content-center gap-2"}
             style={{
                 gridTemplateColumns: "min-content auto auto",
-                // gridTemplateRows: "repeat(4, minmax(250px, 1fr));",
+                gridTemplateRows: "auto .95fr auto",
                 gridTemplateAreas: `
                     ". header header ."
-                    "leaderboard canvas canvas chat"
-                    "leaderboard canvas canvas chat"
-                    ". toolbar toolbar ."
-                    ". colorbar colorbar ."
+                    "leaderboard body body chat"
+                    ". footer footer ."
                 `,
             }}
         >
             <div style={{gridArea: "header"}}>
-                <TopBar/>
+                <Header/>
             </div>
             <div style={{gridArea: "leaderboard"}}>
                 <Leaderboard/>
             </div>
-            <div style={{gridArea: "canvas"}}>
-                <Canvas/>
+            <div style={{gridArea: "body"}}>
+                <Body/>
             </div>
             <div style={{gridArea: "chat"}}>
                 <Chat/>
             </div>
-            <div style={{gridArea: "toolbar"}}>
-                <ToolBar/>
-            </div>
-            <div style={{gridArea: "colorbar"}}>
-                <ColorBar/>
+            <div style={{gridArea: "footer"}}>
+                <Footer/>
             </div>
         </div>
     );

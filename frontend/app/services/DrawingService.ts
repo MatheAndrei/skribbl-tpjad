@@ -5,10 +5,12 @@ import Brush from "~/services/tools/Brush";
 import Bucket from "~/services/tools/Bucket";
 import DrawingStore from "~/stores/DrawingStore";
 import {svgToUrl} from "~/utils/svgToUrl";
+import {gameService} from "~/services/GameService";
 
 export class DrawingService {
-    private static readonly CANVAS_RESOLUTION: Vec2 = {x: 800, y: 600};
-    private static readonly CANVAS_BACKGROUND: string = "rgb(255, 255, 255)";
+    static readonly CANVAS_RESOLUTION: Vec2 = {x: 800, y: 600};
+    static readonly CANVAS_ASPECT_RATIO: string = "4 / 3";
+    static readonly CANVAS_BACKGROUND: string = "rgb(255, 255, 255)";
 
     private static readonly DEFAULT_TOOL: ToolEnum = ToolEnum.BRUSH;
     private static readonly DEFAULT_COLOR: string = "rgb(0, 0, 0)";
@@ -46,7 +48,12 @@ export class DrawingService {
         this.canvas.style.imageRendering = "pixelated";
         this.ctx.imageSmoothingEnabled = false;
 
-        this.clearCanvas();
+        // clear canvas & restore previous fill color
+        const oldColor = this.ctx.fillStyle;
+        this.ctx.fillStyle = DrawingService.CANVAS_BACKGROUND;
+        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        this.ctx.fillStyle = oldColor;
+
         this.setTool(DrawingService.DEFAULT_TOOL);
         this.setColor(DrawingService.DEFAULT_COLOR);
         this.setSize(DrawingService.DEFAULT_BRUSH_SIZE)
@@ -60,6 +67,18 @@ export class DrawingService {
         this.ctx.fillStyle = DrawingService.CANVAS_BACKGROUND;
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
         this.ctx.fillStyle = oldColor;
+
+        // send to server
+        gameService.sendImage(this.canvas.toDataURL());
+    }
+
+    loadImage(image: string) {
+        if (!this.canvas || !this.ctx) return;
+
+        const img = new Image();
+        img.src = image;
+
+        this.ctx.drawImage(img, 0, 0);
     }
 
     setTool(tool: ToolEnum) {
@@ -97,6 +116,10 @@ export class DrawingService {
     setSize(size: number) {
         if (!this.canvas || !this.ctx) return;
 
+        // handle out of bounds
+        size = Math.max(DrawingService.MIN_BRUSH_SIZE, Math.min(size, DrawingService.MAX_BRUSH_SIZE));
+
+        // update brush size
         this.ctx.lineWidth = size;
 
         // update store
@@ -106,8 +129,20 @@ export class DrawingService {
         this.canvas.style.cursor = this.getCursorAsUrl();
     }
 
+    increaseSize() {
+        if (!this.canvas || !this.ctx) return;
+
+        this.setSize(this.ctx.lineWidth + DrawingService.BRUSH_STEP_SIZE);
+    }
+
+    decreaseSize() {
+        if (!this.canvas || !this.ctx) return;
+
+        this.setSize(this.ctx.lineWidth - DrawingService.BRUSH_STEP_SIZE);
+    }
+
     onMouseDown(event: MouseEvent) {
-        if (!this.selectedTool) return;
+        if (!this.canvas || !this.selectedTool) return;
 
         // skip if left click wasn't pressed
         if (event.button !== 0) {
@@ -116,10 +151,13 @@ export class DrawingService {
 
         const pos = this.getMousePosition(event);
         this.selectedTool.onMouseDown(pos);
+
+        // send to server
+        gameService.sendImage(this.canvas.toDataURL());
     }
 
     onMouseUp(event: MouseEvent) {
-        if (!this.selectedTool) return;
+        if (!this.canvas || !this.selectedTool) return;
 
         // skip if left click wasn't released
         if (event.button !== 0) {
@@ -128,13 +166,19 @@ export class DrawingService {
 
         const pos = this.getMousePosition(event);
         this.selectedTool.onMouseUp(pos);
+
+        // send to server
+        gameService.sendImage(this.canvas.toDataURL());
     }
 
     onMouseMove(event: MouseEvent) {
-        if (!this.canvas || !this.selectedTool) return;
+        if (!this.canvas || !this.canvas || !this.selectedTool) return;
 
         const pos = this.getMousePosition(event);
         this.selectedTool.onMouseMove(pos);
+
+        // send to server
+        gameService.sendImage(this.canvas.toDataURL());
     }
 
     private getMousePosition(event: MouseEvent): Vec2 {
@@ -145,8 +189,8 @@ export class DrawingService {
         const scaleY = this.canvas!.height / rect.height;
 
         return {
-            x: Math.round((pageX - this.canvas!.offsetLeft) * scaleX),
-            y: Math.round((pageY - this.canvas!.offsetTop) * scaleY),
+            x: Math.round((pageX - rect.left) * scaleX),
+            y: Math.round((pageY - rect.top) * scaleY),
         };
     }
 

@@ -1,5 +1,6 @@
 package springBoot.socket_io.events;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import com.corundumstudio.socketio.SocketIOClient;
@@ -19,15 +20,18 @@ public class BasicEvent<T extends BasicEventBody> {
     protected T body;
 
     public BasicEvent() {
+        excludedClients = new ArrayList<>();
     }
 
     public BasicEvent(String name) {
         this.name = name;
+        excludedClients = new ArrayList<>();
     }
 
     public BasicEvent(String name, T body) {
         this.name = name;
         this.body = body;
+        excludedClients = new ArrayList<>();
     }
 
     public String getName() {

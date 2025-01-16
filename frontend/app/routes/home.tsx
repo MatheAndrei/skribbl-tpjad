@@ -14,6 +14,7 @@ function Home() {
     const navigate = useNavigate();
 
     const [errors, setErrors] = useState({username: "", room: ""});
+    const [failure, setFailure] = useState<boolean>(false);
 
 
     const onSubmit = (event: FormEvent<HTMLFormElement>) => {
@@ -51,7 +52,10 @@ function Home() {
         gameService
             .host(data.username)
             .then(() => navigate("/game"))
-            .catch((error) => console.log(error));
+            .catch((error) => {
+                console.log(error);
+                setFailure(true);
+            });
     };
 
     const onJoin = (data: {username: string, room: string}) => {
@@ -115,6 +119,9 @@ function Home() {
                         Host
                     </Button>
                 </Form>
+                {failure && (
+                    <p className={"pt-4 text-center text-danger"}>Failed!</p>
+                )}
             </CardBody>
         </Card>
     );

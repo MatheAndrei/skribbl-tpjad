@@ -19,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
 import java.net.ServerSocket;
+import java.util.Objects;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -124,14 +125,16 @@ public class SocketIOService implements IObservable{
         return client -> {
             var handshakeData = client.getHandshakeData();
             String username = handshakeData.getSingleUrlParam("username");
-            
+
             if (username != null && !username.isEmpty()) {
                 System.out.println("Client connected with username: " + username);
                 boolean result = this.sessionService.linkClient(client, username);
                 System.out.println("Client is linked: " + result);
                 if (!result){
                     User user = this.sessionService.createUser(username);
-                    this.sessionService.linkClient(client, username);
+                    System.out.println("USERRRRRRRRR!!!!!" + user);
+                    if(user != null)
+                        this.sessionService.linkClient(client, username);
                 }
             } else {
                 System.out.println("Client connected without a username.");
@@ -142,6 +145,8 @@ public class SocketIOService implements IObservable{
     private void sendEventToRoom(String roomId, BasicEvent event){
         if(roomId == null) return;
         System.out.println("Send updates to room: " + roomId);
+//        var room = this.sessionService.getRoomById(roomId);
+//        System.out.println(room);
         server.getRoomOperations(roomId).getClients().forEach(cl -> {
             if (event.getExcludedClients() != null && !event.getExcludedClients().contains(cl)){
                 String eventJson = "" ;
@@ -163,6 +168,8 @@ public class SocketIOService implements IObservable{
             if (roomId != null)
                 client.leaveRoom(roomId);
             this.sessionService.removeUser(sender);
+
+            System.out.println("Client disconnected " + sender.getUsername() + ".");
 
             Room room = this.sessionService.getRoomById(roomId);
             this.sendEventToRoom(room.getId(), new UpdateAllEvent(new UpdateAllEventBody(room)));
@@ -198,7 +205,7 @@ public class SocketIOService implements IObservable{
 
             Room room = this.sessionService.getUserRoom(sender);
             UpdateAllEvent event = new UpdateAllEvent(new UpdateAllEventBody(room));
-            event.addExcludedClients(client); // exlude the client that is drawing so that he con continue to draw in peace
+            event.addExcludedClients(client); // exclude the client that is drawing so that he con continue to draw in peace
             this.sendEventToRoom(room.getId(), event); 
         };
     }
@@ -209,11 +216,13 @@ public class SocketIOService implements IObservable{
             String roomId = ((JoinRoomEventBody)data).getRoomId();
             User userSaved = this.sessionService.getUserByUsername(username);
             boolean result = this.sessionService.joinRoom(userSaved, roomId);
-            System.out.println("User " + username + " joined the room " + roomId+ " ? " + result);
+//            System.out.println("User " + username + " joined the room " + roomId+ " ? " + result);
+            System.out.println("User " + username + " joined the room " + roomId+ " ? " + result + " " + userSaved);
             if (result) {
                 // Success response
                 Room room = this.sessionService.getUserRoom(userSaved);
                 client.joinRoom(room.getId());
+                System.out.println(client.getSessionId());
                 this.sendEventToRoom(room.getId(), new UpdateAllEvent(new UpdateAllEventBody(room)));
                 if (ackSender != null) {
                     ackSender.sendAckData("success");
@@ -287,10 +296,12 @@ public class SocketIOService implements IObservable{
                 this.sendEventToRoom(roomId, new TimerStartedEvent());
                 break;
             case ObserverEventTypes.TIMER_ENDED:
+                System.out.println("IDKKK!!!");
                 roomId = (String)event.getBody();
                 this.sendEventToRoom(roomId, new TimerEndedEvent());
+                System.out.println("GATAA!!!");
                 break;
-                case ObserverEventTypes.MATCH_ENDED:
+            case ObserverEventTypes.MATCH_ENDED:
                 roomId = (String)event.getBody();
                 this.sendEventToRoom(roomId, new MatchEndedEvent());
                 break;

@@ -11,7 +11,7 @@ public class User extends BaseEntity<String>{
     private Boolean isDrawer;
     private Boolean isHost;
 
-    private Integer score;
+    private Integer score = 0;
 
     public User() {
     }
