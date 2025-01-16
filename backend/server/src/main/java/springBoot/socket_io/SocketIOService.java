@@ -296,10 +296,10 @@ public class SocketIOService implements IObservable{
                 this.sendEventToRoom(roomId, new TimerStartedEvent());
                 break;
             case ObserverEventTypes.TIMER_ENDED:
-                System.out.println("IDKKK!!!");
+                //System.out.println("IDKKK!!!");
                 roomId = (String)event.getBody();
                 this.sendEventToRoom(roomId, new TimerEndedEvent());
-                System.out.println("GATAA!!!");
+                //System.out.println("GATAA!!!");
                 break;
             case ObserverEventTypes.MATCH_ENDED:
                 roomId = (String)event.getBody();

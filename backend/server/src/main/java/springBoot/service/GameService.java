@@ -308,13 +308,13 @@ public class GameService implements IObserver{
                 for (Room room : rooms) {
                     if(room.getStatus() == RoomStatus.InTurn){
                         room.decrementTimer();
-                        System.out.println("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
+                        //System.out.println("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
                         if (room.getTimer() <= 0) {
                             this.timeUpForRoom(room);
 //                            room.setStatus(RoomStatus.Started);
-                            System.out.println("a");
+                            //System.out.println("a");
                         }
-                        System.out.println("b");
+                        //System.out.println("b");
                     }
                 }
             }
@@ -322,15 +322,14 @@ public class GameService implements IObserver{
     }
 
     public void calculateScores(User userDrawer,List<User> correctUsersPerRoom){
-        System.out.println("PISATU:");
-        System.out.println(correctUsersPerRoom);
+        // System.out.println("PISATU:");
+        // System.out.println(correctUsersPerRoom);
         if (correctUsersPerRoom != null) {
             for(User user: correctUsersPerRoom){
                 System.out.println(user);
                 user.setScore(user.getScore()+scoreTurn-correctUsersPerRoom.indexOf(user) * 50);
             }
             if (userDrawer != null){
-                System.out.println("!!!!!!!   PULAAAA   !!!!!!!");
                 userDrawer.setScore(userDrawer.getScore() + 50 * correctUsersPerRoom.size());
             }
 
@@ -341,11 +340,11 @@ public class GameService implements IObserver{
 
 
     private void timeUpForRoom(Room room){
-        System.out.println("1");
+        //System.out.println("1");
         calculateScores(room.getMatch().getCurrentRound().getCurrentTurn().getDrawerUser(), correctUsers.get(room.getId()));
-        System.out.println("2");
+        //System.out.println("2");
         this.notifyObservers(new ObserverEvent(ObserverEventTypes.TIMER_ENDED, room.getId()));
-        System.out.println("3");
+        //System.out.println("3");
         room.getMatch().getCurrentRound().nextTurn();
         if(room.getMatch().getCurrentRound().getCurrentTurn() == null){
             if(room.getMatch().getCurrentRoundNum()>=room.getSettings().getNumRounds()-1){

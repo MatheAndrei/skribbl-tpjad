@@ -374,11 +374,11 @@ public class TestSocketIoService {
         room = this.serviceS.getRoomById(room.getId());
 
         assertEquals(room.getStatus(), RoomStatus.InTurn);
-        Thread.sleep(4000);
+        Thread.sleep(4000); // skip the timer_ended
 
         room = this.serviceS.getRoomById(room.getId());
         assertEquals(room.getStatus(), RoomStatus.Started);
-        assertEquals(orbTest.lastEvent.getEventType(), ObserverEventTypes.TIMER_ENDED);
+        assertEquals(orbTest.lastEvent.getEventType(), ObserverEventTypes.MATCH_STARTED);
         assertEquals((String)orbTest.lastEvent.getBody(), room.getId());
 
         User user1 = new User("id1", "wee", false, true, true);
